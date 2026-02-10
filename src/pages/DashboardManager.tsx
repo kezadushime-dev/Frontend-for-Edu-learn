@@ -53,18 +53,30 @@ export default function DashboardManager() {
   const learnerCount = stats?.learners || 0;
   const activeCohorts = Math.max(1, Math.ceil(learnerCount / 5));
 
+  // Define custom columns for manager dashboard
+  const lessonColumns = [
+    { key: 'title', label: 'Lesson Title' },
+    { key: 'category', label: 'Category' },
+    { key: 'createdBy', label: 'Instructor' },
+    { key: 'createdAt', label: 'Date Created' }
+  ];
+
+  const quizColumns = [
+    { key: 'title', label: 'Quiz Title' },
+    { key: 'questions', label: 'Questions' },
+    { key: 'passingScore', label: 'Pass Score' },
+    { key: 'status', label: 'Status' },
+    { key: 'createdAt', label: 'Date Created' }
+  ];
+
   const lessonRows = lessons.map((lesson) => {
     const createdAt = lesson.createdAt ? new Date(lesson.createdAt).toLocaleDateString() : '—';
-    const updatedAt = lesson.updatedAt ? new Date(lesson.updatedAt).toLocaleDateString() : '—';
 
     return {
       title: lesson.title || '—',
-      description: lesson.description ? (lesson.description.length > 50 ? lesson.description.substring(0, 50) + '...' : lesson.description) : '—',
       category: lesson.category || '—',
-      order: lesson.order ?? '—',
       createdBy: lesson.instructor?.name || lesson.createdBy?.name || lesson.createdBy || '—',
-      createdAt,
-      updatedAt
+      createdAt
     };
   });
 
@@ -74,11 +86,9 @@ export default function DashboardManager() {
 
     return {
       title: quiz.title || '—',
-      lesson: quiz.lesson?.title || quiz.lessonTitle || '—',
       questions: questionCount,
       passingScore: quiz.passingScore ? `${quiz.passingScore}%` : '—',
-      isActive: quiz.isActive ? 'Yes' : 'No',
-      createdBy: quiz.createdBy?.name || quiz.createdBy?.email || quiz.instructor?.name || '—',
+      status: quiz.isActive ? '✓ Active' : '✗ Inactive',
       createdAt
     };
   });
@@ -169,16 +179,22 @@ export default function DashboardManager() {
             </div>
 
             <div className="mt-8">
-              <h3 className="text-xl font-bold mb-4">Lessons</h3>
-              <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-                <AdminTable columns={uiStore.models.lessons} rows={lessonRows} hideActions />
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-2xl font-bold gradient-text">Manage Lessons</h3>
+                <span className="text-sm text-gray-500 bg-blue-50 px-3 py-1 rounded-full font-semibold">{lessons.length} Total</span>
+              </div>
+              <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
+                <AdminTable columns={lessonColumns} rows={lessonRows} hideActions maxRows={5} />
               </div>
             </div>
 
             <div className="mt-8">
-              <h3 className="text-xl font-bold mb-4">Quizzes</h3>
-              <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-                <AdminTable columns={uiStore.models.quizzes} rows={quizRows} hideActions />
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-2xl font-bold gradient-text">Manage Quizzes</h3>
+                <span className="text-sm text-gray-500 bg-blue-50 px-3 py-1 rounded-full font-semibold">{quizzes.length} Total</span>
+              </div>
+              <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
+                <AdminTable columns={quizColumns} rows={quizRows} hideActions maxRows={5} />
               </div>
             </div>
           </div>
