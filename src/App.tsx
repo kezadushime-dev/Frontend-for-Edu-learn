@@ -6,7 +6,8 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import DashboardAdmin from './pages/DashboardAdmin';
 import DashboardLearner from './pages/DashboardLearner';
-import DashboardManager from './pages/DashboardManager';
+import DashboardLearnerIntegrated from './pages/DashboardManager';
+import DashboardInstructor from './pages/DashboardManager';
 import Lesson from './pages/Lesson';
 import Quiz from './pages/Quiz';
 import AdminUsers from './pages/AdminUsers';
@@ -16,6 +17,7 @@ import AdminQuizAttempts from './pages/AdminQuizAttempts';
 import LessonCreate from './pages/LessonCreate';
 import QuizCreate from './pages/QuizCreate';
 import { useLucide } from './utils/useLucide';
+
 
 function App() {
   useLucide();
@@ -31,7 +33,7 @@ function App() {
 
       <Route path="dashboard-admin" element={<DashboardAdmin />} />
       <Route path="dashboard-learner" element={<DashboardLearner />} />
-      <Route path="dashboard-manager" element={<DashboardManager />} />
+      <Route path="dashboard-instructor" element={<DashboardInstructor />} />
 
       <Route path="lesson" element={<Lesson />} />
       <Route path="quiz" element={<Quiz />} />
@@ -43,6 +45,8 @@ function App() {
 
       <Route path="lesson-create" element={<LessonCreate />} />
       <Route path="quiz-create" element={<QuizCreate />} />
+ 
+      
 
       <Route path="*" element={<Navigate to="/home" replace />} />
     </Routes>

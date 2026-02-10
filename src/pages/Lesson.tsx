@@ -2,7 +2,7 @@
 import { Link } from 'react-router-dom';
 import { PrimaryNav, TopBar } from '../components/LayoutPieces';
 import { Sidebar } from '../components/Sidebars';
-import { uiStore } from '../data/uiStore';
+
 import { api } from '../utils/api';
 import { readJson, writeJson } from '../utils/storage';
 
@@ -97,9 +97,9 @@ export default function Lesson() {
           <div className="animate-fadeInUp">
             <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-8">
               <div>
-                <p className="text-primary uppercase font-semibold tracking-wider">{uiStore.lesson.eyebrow}</p>
+                <p className="text-primary uppercase font-semibold tracking-wider">Lessons</p>
                 <h1 className="text-4xl md:text-5xl font-extrabold mt-3 gradient-text">Lessons</h1>
-                <p className="text-gray-600 mt-3">{uiStore.lesson.description}</p>
+                <p className="text-gray-600 mt-3">Explore interactive lessons and track your learning progress.</p>
               </div>
               <div className="flex gap-3">
                 <Link to="/quiz" className="bg-primary text-white px-6 py-3 rounded-md font-semibold hover:bg-blue-700 transition-all duration-300 hover-lift">

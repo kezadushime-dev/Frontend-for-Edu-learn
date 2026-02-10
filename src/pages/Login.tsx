@@ -21,7 +21,7 @@ export default function Login() {
       setMessage({ text: 'Login successful. Redirecting...', type: 'success' });
       const role = user.role || 'learner';
       const redirect =
-        role === 'admin' ? '/dashboard-admin' : role === 'instructor' ? '/dashboard-manager' : '/dashboard-learner';
+        role === 'admin' ? '/dashboard-admin' : role === 'instructor' ? '/dashboard-instructor' : '/dashboard-learner';
       window.setTimeout(() => {
         navigate(redirect);
       }, 500);

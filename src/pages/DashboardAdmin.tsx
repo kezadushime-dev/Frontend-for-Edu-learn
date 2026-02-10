@@ -2,7 +2,6 @@
 import { Link } from 'react-router-dom';
 import { PrimaryNav, TopBar } from '../components/LayoutPieces';
 import { Sidebar } from '../components/Sidebars';
-import { uiStore } from '../data/uiStore';
 import { api } from '../utils/api';
 
 export default function DashboardAdmin() {
@@ -17,13 +16,16 @@ export default function DashboardAdmin() {
     let mounted = true;
     const load = async () => {
       try {
-        const [usersRes, lessonsRes, quizzesRes, analyticsRes, statsRes] = await Promise.all([
+        // Load analytics first to avoid ObjectId casting error with "analytics" as ID
+        const analyticsRes = await api.quizzes.analytics();
+        
+        const [usersRes, lessonsRes, quizzesRes, statsRes] = await Promise.all([
           api.admin.users(),
           api.lessons.list(),
           api.quizzes.list(),
-          api.quizzes.analytics(),
           api.admin.statistics()
         ]);
+        
         if (!mounted) return;
         setUsers(usersRes.data.users || []);
         setLessons(lessonsRes.data.lessons || []);
@@ -36,7 +38,34 @@ export default function DashboardAdmin() {
         });
       } catch (err: any) {
         if (!mounted) return;
-        setError(err?.message || 'Failed to load admin dashboard data.');
+        // If analytics fails, continue without it
+        if (err?.message?.includes('analytics')) {
+          console.warn('Analytics endpoint failed, loading without analytics data');
+          try {
+            const [usersRes, lessonsRes, quizzesRes, statsRes] = await Promise.all([
+              api.admin.users(),
+              api.lessons.list(),
+              api.quizzes.list(),
+              api.admin.statistics()
+            ]);
+            
+            if (!mounted) return;
+            setUsers(usersRes.data.users || []);
+            setLessons(lessonsRes.data.lessons || []);
+            setQuizzes(quizzesRes.data.quizzes || []);
+            setAnalytics([]);
+            setStats({
+              totalUsers: statsRes.data.statistics.totalUsers,
+              totalLessons: lessonsRes.data.lessons.length,
+              totalQuizzes: quizzesRes.data.quizzes.length
+            });
+          } catch (fallbackErr: any) {
+            if (!mounted) return;
+            setError(fallbackErr?.message || 'Failed to load admin dashboard data.');
+          }
+        } else {
+          setError(err?.message || 'Failed to load admin dashboard data.');
+        }
       }
     };
     load();
@@ -89,10 +118,10 @@ export default function DashboardAdmin() {
             title="Admin"
             links={[
               { label: 'Overview', active: true },
-              { label: 'Manage Users', to: '/admin/users' },
-              { label: 'Manage Lessons', to: '/admin/lessons' },
-              { label: 'Manage Quizzes', to: '/admin/quizzes' },
-              { label: 'Quiz Attempts', to: '/admin/quiz-attempts' },
+              { label: 'Manage Users', to: '/admin-users' },
+              { label: 'Manage Lessons', to: '/admin-lessons' },
+              { label: 'Manage Quizzes', to: '/admin-quizzes' },
+              { label: 'Quiz Attempts', to: '/admin-quiz-attempts' },
               { label: 'Logout', to: '/login' }
             ]}
           />
@@ -123,50 +152,24 @@ export default function DashboardAdmin() {
               <div className="bg-white rounded-xl p-6 shadow-lg hover-lift">
                 <p className="text-sm text-gray-500">Total Users</p>
                 <h3 className="text-3xl font-bold mt-2">{stats?.totalUsers ?? users.length}</h3>
-                <p className="text-xs text-gray-500 mt-2">{uiStore.admin.notes.users}</p>
               </div>
               <div className="bg-white rounded-xl p-6 shadow-lg hover-lift">
                 <p className="text-sm text-gray-500">Total Lessons</p>
                 <h3 className="text-3xl font-bold mt-2">{stats?.totalLessons ?? lessons.length}</h3>
-                <p className="text-xs text-gray-500 mt-2">{uiStore.admin.notes.lessons}</p>
               </div>
               <div className="bg-white rounded-xl p-6 shadow-lg hover-lift">
                 <p className="text-sm text-gray-500">Total Quizzes</p>
                 <h3 className="text-3xl font-bold mt-2">{stats?.totalQuizzes ?? quizzes.length}</h3>
-                <p className="text-xs text-gray-500 mt-2">{uiStore.admin.notes.quizzes}</p>
               </div>
               <div className="bg-white rounded-xl p-6 shadow-lg hover-lift">
                 <p className="text-sm text-gray-500">Quiz Pass Rate</p>
                 <h3 className="text-3xl font-bold mt-2">{passRate}%</h3>
-                <p className="text-xs text-gray-500 mt-2">{uiStore.admin.notes.passRate}</p>
-              </div>
-            </div>
-
-            <div className="grid lg:grid-cols-2 gap-6 mt-8">
-              <div className="bg-white rounded-xl p-6 shadow-lg">
-                <h3 className="text-xl font-bold mb-4">Recent Admin Actions</h3>
-                <div className="grid gap-3 text-sm">
-                  {uiStore.admin.actions.map((item) => (
-                    <div key={item.label} className="flex items-center justify-between">
-                      <span>{item.label}</span>
-                      <span className="text-gray-500">{item.value}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="bg-white rounded-xl p-6 shadow-lg">
-                <h3 className="text-xl font-bold mb-4">Pending Actions</h3>
-                <ul className="space-y-3 text-sm text-gray-600">
-                  {uiStore.admin.pending.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
               </div>
             </div>
 
             <div className="grid lg:grid-cols-3 gap-6 mt-8">
               <div className="bg-white rounded-xl p-6 shadow-lg">
-                <h3 className="text-xl font-bold mb-4">Users (GET /admin/users)</h3>
+                <h3 className="text-xl font-bold mb-4">Users</h3>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm text-left">
                     <thead className="text-xs uppercase text-gray-500">
@@ -189,7 +192,7 @@ export default function DashboardAdmin() {
                 </div>
               </div>
               <div className="bg-white rounded-xl p-6 shadow-lg">
-                <h3 className="text-xl font-bold mb-4">Lessons (GET /lessons)</h3>
+                <h3 className="text-xl font-bold mb-4">Lessons</h3>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm text-left">
                     <thead className="text-xs uppercase text-gray-500">
@@ -212,7 +215,7 @@ export default function DashboardAdmin() {
                 </div>
               </div>
               <div className="bg-white rounded-xl p-6 shadow-lg">
-                <h3 className="text-xl font-bold mb-4">Quizzes (GET /quizzes)</h3>
+                <h3 className="text-xl font-bold mb-4">Quizzes</h3>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm text-left">
                     <thead className="text-xs uppercase text-gray-500">

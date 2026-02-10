@@ -1,8 +1,9 @@
 ﻿import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { PrimaryNav, TopBar } from '../components/LayoutPieces';
 import { Sidebar } from '../components/Sidebars';
 import { AdminTable } from '../components/AdminTable';
-import { uiStore } from '../data/uiStore';
+
 import { api } from '../utils/api';
 
 const roleOptions = ['learner', 'instructor', 'admin'];
@@ -67,10 +68,10 @@ export default function AdminUsers() {
         variant="admin"
         items={[
           { label: 'Dashboard', to: '/dashboard-admin' },
-          { label: 'Users', to: '/admin/users', className: 'text-primary font-semibold' },
-          { label: 'Lessons', to: '/admin/lessons' },
-          { label: 'Quizzes', to: '/admin/quizzes' },
-          { label: 'Attempts', to: '/admin/quiz-attempts' }
+          { label: 'Users', to: '/admin-users', className: 'text-primary font-semibold' },
+          { label: 'Lessons', to: '/admin-lessons' },
+          { label: 'Quizzes', to: '/admin-quizzes' },
+          { label: 'Attempts', to: '/admin-quiz-attempts' }
         ]}
       />
 
@@ -80,9 +81,9 @@ export default function AdminUsers() {
           links={[
             { label: 'Overview', to: '/dashboard-admin' },
             { label: 'Manage Users', active: true },
-            { label: 'Manage Lessons', to: '/admin/lessons' },
-            { label: 'Manage Quizzes', to: '/admin/quizzes' },
-            { label: 'Quiz Attempts', to: '/admin/quiz-attempts' },
+            { label: 'Manage Lessons', to: '/admin-lessons' },
+            { label: 'Manage Quizzes', to: '/admin-quizzes' },
+            { label: 'Quiz Attempts', to: '/admin-quiz-attempts' },
             { label: 'Logout', to: '/login' }
           ]}
         />
@@ -100,13 +101,24 @@ export default function AdminUsers() {
 
           <div className="bg-white rounded-xl shadow-lg p-6">
             <AdminTable
-              columns={uiStore.models.users}
+              columns={[
+                { key: 'name', label: 'Name' },
+                { key: 'email', label: 'Email' },
+                { key: 'role', label: 'Role' },
+                { key: 'isActive', label: 'Active' }
+              ]}
               rows={rows}
               renderActions={(row) => {
                 const id = String(row._id || row.id || '');
                 const role = String(row.role || 'learner');
                 return (
                   <div className="flex items-center gap-3">
+                    <Link 
+                      to={`/admin/users/${id}`}
+                      className="text-primary font-semibold text-sm hover:underline"
+                    >
+                      View
+                    </Link>
                     <select
                       className="border border-gray-200 rounded-md px-2 py-1 text-sm"
                       value={role}

@@ -2,7 +2,6 @@
 import { Link } from 'react-router-dom';
 import { PrimaryNav, TopBar } from '../components/LayoutPieces';
 import { Sidebar } from '../components/Sidebars';
-import { uiStore } from '../data/uiStore';
 import { api } from '../utils/api';
 import { readJson, writeJson } from '../utils/storage';
 
@@ -121,9 +120,9 @@ export default function Quiz() {
           <div>
             <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-8 animate-fadeInUp">
               <div>
-                <p className="text-primary uppercase font-semibold tracking-wider">{uiStore.quiz.eyebrow}</p>
+                <p className="text-primary uppercase font-semibold tracking-wider">Quizzes</p>
                 <h1 className="text-4xl md:text-5xl font-extrabold mt-3 gradient-text">Quizzes</h1>
-                <p className="text-gray-600 mt-3 max-w-2xl">{uiStore.quiz.description}</p>
+                <p className="text-gray-600 mt-3 max-w-2xl">Test your knowledge with interactive quizzes linked to your lessons.</p>
               </div>
               <div className="flex gap-3">
                 <Link to="/dashboard-learner" className="bg-primary text-white px-6 py-3 rounded-md font-semibold hover:bg-blue-700 transition-all duration-300 hover-lift">

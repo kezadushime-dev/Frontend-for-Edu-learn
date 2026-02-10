@@ -3,12 +3,13 @@ import { Link } from 'react-router-dom';
 import { PrimaryNav, TopBar } from '../components/LayoutPieces';
 import { Sidebar } from '../components/Sidebars';
 import { AdminTable } from '../components/AdminTable';
-import { uiStore } from '../data/uiStore';
+
 import { api } from '../utils/api';
 
 export default function AdminQuizzes() {
   const [quizzes, setQuizzes] = useState<any[]>([]);
   const [error, setError] = useState('');
+  const [saving, setSaving] = useState<string>('');
 
   useEffect(() => {
     let mounted = true;
@@ -28,6 +29,20 @@ export default function AdminQuizzes() {
     };
   }, []);
 
+  const deleteQuiz = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this quiz?')) return;
+    
+    setSaving(id);
+    try {
+      await api.quizzes.delete(id);
+      setQuizzes((prev) => prev.filter((quiz) => quiz._id !== id));
+    } catch (err: any) {
+      setError(err?.message || 'Failed to delete quiz.');
+    } finally {
+      setSaving('');
+    }
+  };
+
   const rows = quizzes.map((quiz) => ({
     ...quiz,
     lesson: quiz.lesson?.title || quiz.lesson || '—',
@@ -42,10 +57,10 @@ export default function AdminQuizzes() {
         variant="admin"
         items={[
           { label: 'Dashboard', to: '/dashboard-admin' },
-          { label: 'Users', to: '/admin/users' },
-          { label: 'Lessons', to: '/admin/lessons' },
-          { label: 'Quizzes', to: '/admin/quizzes', className: 'text-primary font-semibold' },
-          { label: 'Attempts', to: '/admin/quiz-attempts' }
+          { label: 'Users', to: '/admin-users' },
+          { label: 'Lessons', to: '/admin-lessons' },
+          { label: 'Quizzes', to: '/admin-quizzes', className: 'text-primary font-semibold' },
+          { label: 'Attempts', to: '/admin-quiz-attempts' }
         ]}
       />
 
@@ -54,10 +69,10 @@ export default function AdminQuizzes() {
           title="Admin"
           links={[
             { label: 'Overview', to: '/dashboard-admin' },
-            { label: 'Manage Users', to: '/admin/users' },
-            { label: 'Manage Lessons', to: '/admin/lessons' },
+            { label: 'Manage Users', to: '/admin-users' },
+            { label: 'Manage Lessons', to: '/admin-lessons' },
             { label: 'Manage Quizzes', active: true },
-            { label: 'Quiz Attempts', to: '/admin/quiz-attempts' },
+            { label: 'Quiz Attempts', to: '/admin-quiz-attempts' },
             { label: 'Logout', to: '/login' }
           ]}
         />
@@ -76,7 +91,42 @@ export default function AdminQuizzes() {
           {error ? <p className="text-red-600 text-sm mb-4">{error}</p> : null}
 
           <div className="bg-white rounded-xl shadow-lg p-6">
-            <AdminTable columns={uiStore.models.quizzes} rows={rows} />
+            <AdminTable 
+              columns={[
+                { key: 'title', label: 'Title' },
+                { key: 'lesson', label: 'Lesson' },
+                { key: 'questions', label: 'Questions' },
+                { key: 'passingScore', label: 'Passing Score' },
+                { key: 'isActive', label: 'Status' }
+              ]} 
+              rows={rows}
+              renderActions={(row) => {
+                const id = String(row._id || row.id || '');
+                return (
+                  <div className="flex items-center gap-3">
+                    <Link 
+                      to={`/quiz/${id}`}
+                      className="text-primary font-semibold text-sm hover:underline"
+                    >
+                      View
+                    </Link>
+                    <Link 
+                      to={`/quiz-edit/${id}`}
+                      className="text-blue-600 font-semibold text-sm hover:underline"
+                    >
+                      Edit
+                    </Link>
+                    <button
+                      className="text-red-600 font-semibold text-sm"
+                      onClick={() => deleteQuiz(id)}
+                      disabled={saving === id}
+                    >
+                      {saving === id ? 'Deleting...' : 'Delete'}
+                    </button>
+                  </div>
+                );
+              }}
+            />
           </div>
         </div>
       </section>
