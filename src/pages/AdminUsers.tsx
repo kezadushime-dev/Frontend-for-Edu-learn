@@ -35,7 +35,7 @@ export default function AdminUsers() {
     setSaving(id);
     try {
       const res = await api.admin.updateRole(id, role);
-      setUsers((prev) => prev.map((user) => (user._id === id ? res.data.user : user)));
+      setUsers((prev) => prev.map((user) => (user._id === id ? (res as any).data.user : user)));
     } catch (err: any) {
       setError(err?.message || 'Failed to update role.');
     } finally {
@@ -124,6 +124,7 @@ export default function AdminUsers() {
                       value={role}
                       onChange={(event) => updateRole(id, event.target.value)}
                       disabled={saving === id}
+                      aria-label="Select user role"
                     >
                       {roleOptions.map((opt) => (
                         <option key={opt} value={opt}>
