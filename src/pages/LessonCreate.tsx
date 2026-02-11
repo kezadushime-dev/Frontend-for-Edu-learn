@@ -1,4 +1,4 @@
-﻿import { type FormEvent, useState } from 'react';
+﻿import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { PrimaryNav, TopBar } from '../components/LayoutPieces';
 import { Sidebar } from '../components/Sidebars';
@@ -15,7 +15,7 @@ export default function LessonCreate() {
   const [message, setMessage] = useState<{ text: string; type: 'error' | 'success' } | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!images || images.length === 0) {
       setMessage({ text: 'Please upload at least one image.', type: 'error' });

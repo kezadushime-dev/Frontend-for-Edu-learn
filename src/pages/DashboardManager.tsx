@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from 'react';//ifasha gukoresha state management na lifecycle hooks muri React
+import { useEffect, useMemo, useState } from 'react';//ifasha gukoresha state management na lifecycle hooks muri React
 import { Link } from 'react-router-dom';//ifasha gukora navigation hagati y'amapages atandukanye muri React application
 import { PrimaryNav, TopBar } from '../components/LayoutPieces';//ifasha gukoresha components za layout zateguwe mbere kugirango habeho consistency mu design
 import { Sidebar } from '../components/Sidebars';//ifasha gukoresha sidebar component yateguwe mbere kugirango habeho consistency mu design

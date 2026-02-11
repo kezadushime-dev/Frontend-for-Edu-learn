@@ -1,26 +1,5 @@
 import { Link } from 'react-router-dom';
 import { Footer, PrimaryNav, TopBar } from '../components/LayoutPieces';
-import { lessonCourses, quizCourses } from '../data/uiStore';
-
-const iconMap: Record<string, string> = {
-  web: 'code-2',
-  backend: 'database',
-  dashboard: 'layout-dashboard'
-};
-
-const levelMap: Record<string, string> = {
-  web: 'Beginner',
-  backend: 'Intermediate',
-  dashboard: 'Advanced'
-};
-
-const countLessons = (course: (typeof lessonCourses)[number]) =>
-  course.modules.reduce((sum, mod) => sum + mod.lessons.length, 0);
-
-const countQuizzes = (courseId: string) => {
-  const course = quizCourses.find((item) => item.id === courseId);
-  return course ? course.quizzes.length : 0;
-};
 
 export default function Home() {
   return (
@@ -202,51 +181,26 @@ export default function Home() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-10">
-            {lessonCourses.map((course, idx) => {
-              const icon = iconMap[course.id] || 'book-open';
-              const level = levelMap[course.id] || 'Beginner';
-              const lessonsCount = countLessons(course);
-              const quizzesCount = countQuizzes(course.id);
-
-              return (
-                <Link
-                  key={course.id}
-                  to="/login"
-                  className="block p-10 bg-white shadow-lg rounded-xl hover:shadow-2xl transition-all duration-500 hover-lift group glass-effect border border-gray-100 animate-scaleIn"
-                  style={idx > 0 ? { animationDelay: `${idx * 0.15}s` } : undefined}
-                >
-                  <div className="flex items-start justify-between gap-4 mb-6">
-                    <div className="w-16 h-16 bg-blue-100 text-primary rounded-lg flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all duration-300 animate-glow">
-                      <i data-lucide={icon} className="w-6 h-6"></i>
-                    </div>
-                    <span className="text-xs font-bold uppercase tracking-widest text-primary bg-blue-50 px-3 py-1 rounded-full">
-                      {level}
-                    </span>
-                  </div>
-                  <h3 className="text-xl font-bold mb-3 group-hover:text-primary transition-all duration-300">{course.title}</h3>
-                  <p className="text-gray-600 group-hover:text-gray-700 transition-all duration-300 mb-6">
-                    Start this track with lessons and quizzes aligned to the {course.title} curriculum.
-                  </p>
-                  <div className="flex items-center justify-between text-sm text-gray-500">
-                    <span className="flex items-center gap-2">
-                      <i data-lucide="clock" className="w-4 h-4 text-primary"></i> Self paced
-                    </span>
-                    <span className="flex items-center gap-2">
-                      <i data-lucide="bar-chart-3" className="w-4 h-4 text-primary"></i> {lessonsCount} lessons
-                    </span>
-                    <span className="flex items-center gap-2">
-                      <i data-lucide="sparkles" className="w-4 h-4 text-primary"></i> {quizzesCount} quizzes
-                    </span>
-                  </div>
-                  <div className="mt-8 flex items-center justify-between">
-                    <span className="font-semibold text-dark">Start course</span>
-                    <span className="inline-flex items-center gap-2 text-primary font-semibold">
-                      Open <i data-lucide="arrow-right" className="w-4 h-4"></i>
-                    </span>
-                  </div>
-                </Link>
-              );
-            })}
+            <div className="p-10 bg-white shadow-lg rounded-xl hover:shadow-2xl transition-all duration-500 hover-lift group glass-effect border border-gray-100 animate-scaleIn">
+              <div className="flex items-start justify-between gap-4 mb-6">
+                <div className="w-16 h-16 bg-blue-100 text-primary rounded-lg flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all duration-300 animate-glow">
+                  <i data-lucide="book-open" className="w-6 h-6"></i>
+                </div>
+                <span className="text-xs font-bold uppercase tracking-widest text-primary bg-blue-50 px-3 py-1 rounded-full">
+                  Beginner
+                </span>
+              </div>
+              <h3 className="text-xl font-bold mb-3 group-hover:text-primary transition-all duration-300">Get Started</h3>
+              <p className="text-gray-600 group-hover:text-gray-700 transition-all duration-300 mb-6">
+                Start learning with interactive lessons and quizzes.
+              </p>
+              <div className="mt-8 flex items-center justify-between">
+                <Link to="/login" className="font-semibold text-dark">Start course</Link>
+                <span className="inline-flex items-center gap-2 text-primary font-semibold">
+                  Open <i data-lucide="arrow-right" className="w-4 h-4"></i>
+                </span>
+              </div>
+            </div>
           </div>
 
           <div className="mt-14 grid md:grid-cols-3 gap-6 animate-fadeInUp">

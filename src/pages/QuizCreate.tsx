@@ -1,4 +1,4 @@
-﻿import { type FormEvent, useState } from 'react';
+﻿import { FormEvent, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { PrimaryNav, TopBar } from '../components/LayoutPieces';
 import { Sidebar } from '../components/Sidebars';

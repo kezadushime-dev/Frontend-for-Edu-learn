@@ -6,7 +6,8 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import DashboardAdmin from './pages/DashboardAdmin';
 import DashboardLearner from './pages/DashboardLearner';
-import DashboardManager from './pages/DashboardManager';
+// import DashboardLearnerIntegrated from './pages/DashboardInstructor';
+import DashboardInstructor from './pages/DashboardInstructor';
 import Lesson from './pages/Lesson';
 import Quiz from './pages/Quiz';
 import AdminUsers from './pages/AdminUsers';
@@ -15,12 +16,8 @@ import AdminQuizzes from './pages/AdminQuizzes';
 import AdminQuizAttempts from './pages/AdminQuizAttempts';
 import LessonCreate from './pages/LessonCreate';
 import QuizCreate from './pages/QuizCreate';
-import InstructorLessons from './pages/InstructorLessons';
-import InstructorLessonCreate from './pages/InstructorLessonCreate';
-import InstructorQuizzes from './pages/InstructorQuizzes';
-import InstructorQuizCreate from './pages/InstructorQuizCreate';
-import SeedData from './pages/SeedData';
 import { useLucide } from './utils/useLucide';
+
 
 function App() {
   useLucide();
@@ -36,7 +33,7 @@ function App() {
 
       <Route path="dashboard-admin" element={<DashboardAdmin />} />
       <Route path="dashboard-learner" element={<DashboardLearner />} />
-      <Route path="dashboard-manager" element={<DashboardManager />} />
+      <Route path="dashboard-instructor" element={<DashboardInstructor />} />
 
       <Route path="lesson" element={<Lesson />} />
       <Route path="quiz" element={<Quiz />} />
@@ -48,16 +45,16 @@ function App() {
 
       <Route path="lesson-create" element={<LessonCreate />} />
       <Route path="quiz-create" element={<QuizCreate />} />
-
-      <Route path="instructor/lessons" element={<InstructorLessons />} />
-      <Route path="instructor/lesson-create" element={<InstructorLessonCreate />} />
-      <Route path="instructor/quizzes" element={<InstructorQuizzes />} />
-      <Route path="instructor/quiz-create" element={<InstructorQuizCreate />} />
-      <Route path="seed-data" element={<SeedData />} />
+ 
+      
 
       <Route path="*" element={<Navigate to="/home" replace />} />
     </Routes>
   );
 }
+
+
+
+
 
 export default App;
