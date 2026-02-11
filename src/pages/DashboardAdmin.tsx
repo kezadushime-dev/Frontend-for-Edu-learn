@@ -11,6 +11,11 @@ export default function DashboardAdmin() {
   const [analytics, setAnalytics] = useState<any[]>([]);
   const [stats, setStats] = useState<{ totalUsers?: number; totalLessons?: number; totalQuizzes?: number } | null>(null);
   const [error, setError] = useState<string>('');
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [formData, setFormData] = useState({ name: '', email: '', password: '', role: 'learner' });
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -74,6 +79,26 @@ export default function DashboardAdmin() {
     };
   }, []);
 
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const newUser = await api.admin.createUser(formData);
+      setUsers([...users, (newUser as any).data.user]);
+      setShowCreateModal(false);
+      setFormData({ name: '', email: '', password: '', role: 'learner' });
+    } catch (err: any) {
+      setError(err?.message || 'Failed to create user.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleViewUser = (user: any) => {
+    setSelectedUser(user);
+    setShowViewModal(true);
+  };
+
   const passRate = useMemo(() => {
     if (!analytics.length) return 0;
     const totalAttempts = analytics.reduce((sum, item) => sum + (item.attempts || 0), 0);
@@ -134,6 +159,12 @@ export default function DashboardAdmin() {
                 <p className="text-gray-600 mt-2">Manage users, lessons, quizzes, and platform performance.</p>
               </div>
               <div className="flex gap-3">
+                <button
+                  onClick={() => setShowCreateModal(true)}
+                  className="bg-primary text-white px-5 py-2 rounded-md font-semibold hover:bg-blue-700 transition-all duration-300"
+                >
+                  Create User
+                </button>
                 <Link to="/lesson-create" className="bg-primary text-white px-5 py-2 rounded-md font-semibold hover:bg-blue-700 transition-all duration-300">
                   Create Lesson
                 </Link>
@@ -180,8 +211,12 @@ export default function DashboardAdmin() {
                       </tr>
                     </thead>
                     <tbody className="text-gray-700">
-                      {userRows.map((row) => (
-                        <tr key={`${row.name}-${row.email}`}>
+                      {userRows.map((row, idx) => (
+                        <tr
+                          key={`${row.name}-${row.email}`}
+                          onClick={() => handleViewUser(users[idx])}
+                          className="cursor-pointer hover:bg-gray-100 transition-colors"
+                        >
                           <td className="py-2">{row.name}</td>
                           <td className="py-2">{row.email}</td>
                           <td className="py-2">{row.role}</td>
@@ -241,6 +276,111 @@ export default function DashboardAdmin() {
           </div>
         </div>
       </section>
+
+      {/* Create User Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-8 max-w-md w-full mx-4">
+            <h2 className="text-2xl font-bold mb-4">Create New User</h2>
+            <form onSubmit={handleCreateUser} className="grid gap-4">
+              <div>
+                <label className="text-sm font-semibold mb-1 block">Name</label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="User name"
+                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                  required
+                />
+              </div>
+              <div>
+                <label className="text-sm font-semibold mb-1 block">Email</label>
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  placeholder="user@example.com"
+                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                  required
+                />
+              </div>
+              <div>
+                <label className="text-sm font-semibold mb-1 block">Password</label>
+                <input
+                  type="password"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  placeholder="Password"
+                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                  required
+                />
+              </div>
+              <div>
+                <label className="text-sm font-semibold mb-1 block">Role</label>
+                <select
+                  value={formData.role}
+                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                  <option value="learner">Learner</option>
+                  <option value="instructor">Instructor</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+              <div className="flex gap-3 mt-4">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="flex-1 bg-primary text-white py-2 rounded-md font-semibold hover:bg-blue-700 transition-all disabled:opacity-60"
+                >
+                  {loading ? 'Creating...' : 'Create'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowCreateModal(false)}
+                  className="flex-1 border border-gray-300 py-2 rounded-md font-semibold hover:bg-gray-50 transition-all"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* View User Modal */}
+      {showViewModal && selectedUser && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-8 max-w-md w-full mx-4">
+            <h2 className="text-2xl font-bold mb-4">User Details</h2>
+            <div className="grid gap-4">
+              <div>
+                <label className="text-xs font-semibold text-gray-500 uppercase">Name</label>
+                <p className="text-lg">{selectedUser.name}</p>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-500 uppercase">Email</label>
+                <p className="text-lg">{selectedUser.email}</p>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-500 uppercase">Role</label>
+                <p className="text-lg capitalize">{selectedUser.role}</p>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-500 uppercase">ID</label>
+                <p className="text-sm text-gray-600 break-all">{selectedUser._id || selectedUser.id}</p>
+              </div>
+              <button
+                onClick={() => setShowViewModal(false)}
+                className="w-full bg-primary text-white py-2 rounded-md font-semibold hover:bg-blue-700 transition-all mt-4"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

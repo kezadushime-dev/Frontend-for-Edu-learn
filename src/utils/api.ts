@@ -2,7 +2,7 @@ import { getToken, setToken, setUser } from './auth';
 
 const baseUrl =
   (import.meta as ImportMeta & { env?: Record<string, string> }).env?.VITE_API_BASE_URL ||
-  'http://localhost:8008/api/v1';
+  'https://backend-for-edulearn.onrender.com/api/v1';
 
 type ApiOptions = RequestInit & { json?: unknown };
 
@@ -110,6 +110,8 @@ export const api = {
 
   admin: {
     users: async () => request<{ data: { users: any[] } }>('/admin/users'),
+    createUser: async (payload: { name: string; email: string; password: string; role: string }) =>
+      request<{ data: { user: any } }>('/admin/users', { method: 'POST', json: payload }),
     deleteUser: async (id: string) => request(`/admin/users/${id}`, { method: 'DELETE' }),
     updateRole: async (id: string, role: string) => 
       request<{ data: { user: any } }>(`/admin/users/${id}/role`, { method: 'PATCH', json: { role } }),
