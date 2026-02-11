@@ -106,6 +106,8 @@ export const api = {
   admin: {
     users: async () => request<{ data: { users: any[] } }>('/admin/users'),
     updateRole: async (id: string, role: string) => request<{ data: { user: any } }>(`/admin/users/${id}`, { method: 'PATCH', json: { role } }),
+    createUser: async (payload: { name: string; email: string; password: string; role: string }) =>
+      request<{ data: { user: any } }>('/admin/users', { method: 'POST', json: payload }),
     deleteUser: async (id: string) => request(`/admin/users/${id}`, { method: 'DELETE' }),
     statistics: async () => request<{ data: { statistics: any } }>('/admin/statistics')
   }
