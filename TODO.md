@@ -1,0 +1,3 @@
+- [x] Edit src/pages/InstructorLessons.tsx to prefix 'instructorId' with underscore
+- [x] Edit src/pages/InstructorQuizzes.tsx to prefix 'selectedQuiz' and 'instructorId' with underscores
+- [ ] Run TypeScript check to verify errors are resolved

@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PrimaryNav, TopBar } from '../components/LayoutPieces';
 import { Sidebar } from '../components/Sidebars';
@@ -12,40 +12,6 @@ const getQuizState = () =>
     scores: {}
   });
 
-export default function DashboardLearner() {
-  const [lessonCount, setLessonCount] = useState(0);
-  const [quizCount, setQuizCount] = useState(0);
-  const [error, setError] = useState('');
-
-  const quizState = getQuizState();
-  const completedQuizzes = Object.keys(quizState.completedQuizzes || {}).length;
-  const scores = Object.values(quizState.scores || {}).filter((value) => typeof value === 'number');
-  const avg = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
-
-  useEffect(() => {
-    let mounted = true;
-    const load = async () => {
-      try {
-        const [lessonsRes, quizzesRes] = await Promise.all([api.lessons.list(), api.quizzes.list()]);
-        if (!mounted) return;
-        setLessonCount(lessonsRes.data.lessons.length);
-        setQuizCount(quizzesRes.data.quizzes.length);
-      } catch (err: any) {
-        if (!mounted) return;
-        setError(err?.message || 'Failed to load learner dashboard data.');
-      }
-    };
-    load();
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  return (
-    <div className="bg-[#f5f8ff] text-slate-800">
-import { api } from '../utils/api';
-
-// Defined types based on your API spec
 interface Lesson {
   _id: string;
   title: string;
@@ -64,6 +30,13 @@ export default function DashboardLearner() {
   const [userData, setUserData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [lessonCount, setLessonCount] = useState(0);
+  const [quizCount, setQuizCount] = useState(0);
+
+  const quizState = getQuizState();
+  const completedQuizzes = Object.keys(quizState.completedQuizzes || {}).length;
+  const scores = Object.values(quizState.scores || {}).filter((value) => typeof value === 'number');
+  const avg = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
 
   useEffect(() => {
     let isMounted = true;
@@ -71,24 +44,24 @@ export default function DashboardLearner() {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
-        // Pulling core data from your defined API routes
         const [lessonsRes, quizzesRes, userRes] = await Promise.all([
-          api.lessons.list(),     // GET /lessons
-          api.quizzes.list(),     // GET /quizzes
-          api.auth.me()           // GET /auth/me (to get user-specific progress if stored there)
+          api.lessons.list(),
+          api.quizzes.list(),
+          api.auth.me()
         ]);
 
         if (isMounted) {
           setLessons(lessonsRes.data.lessons || []);
           setQuizzes(quizzesRes.data.quizzes || []);
           setUserData(userRes.data.user || null);
-          setError(''); // Clear any previous errors
+          setLessonCount(lessonsRes.data.lessons.length);
+          setQuizCount(quizzesRes.data.quizzes.length);
+          setError('');
         }
       } catch (err: any) {
         if (isMounted) {
           console.error('Dashboard data fetch error:', err);
-          // Don't show generic error to user, just log it
-          setError(''); // Clear error state so UI doesn't break
+          setError('');
         }
       } finally {
         if (isMounted) setLoading(false);
@@ -99,15 +72,10 @@ export default function DashboardLearner() {
     return () => { isMounted = false; };
   }, []);
 
-  // Derived stats from DB data
   const totalLessons = lessons.length;
   const totalQuizzes = quizzes.length;
-  
-  // Calculate user-specific progress
   const completedLessonsCount = userData?.completedLessons?.length || 0;
   const completedQuizzesCount = userData?.completedQuizzes?.length || 0;
-  
-  // Calculate progress percentage
   const progressPercentage = totalLessons > 0 ? Math.round((completedLessonsCount / totalLessons) * 100) : 0;
   const successRate = totalQuizzes > 0 ? Math.round((completedQuizzesCount / totalQuizzes) * 100) : 0;
 
@@ -163,11 +131,6 @@ export default function DashboardLearner() {
                 <h3 className="text-3xl font-bold mt-2">{lessonCount}</h3>
                 <p className="text-xs text-gray-500 mt-2">{uiStore.statsNotes.lessons}</p>
               </div>
-              {/* <div className="bg-white rounded-xl p-6 shadow-lg hover-lift">
-                <p className="text-sm text-gray-500">Lessons Completed</p>
-                <h3 className="text-3xl font-bold mt-2">0</h3>
-                <p className="text-xs text-green-600 mt-2">Local progress (not synced)</p>
-              </div> */}
               <div className="bg-white rounded-xl p-6 shadow-lg hover-lift">
                 <p className="text-sm text-gray-500">Quiz Average</p>
                 <h3 className="text-3xl font-bold mt-2">{avg}%</h3>
@@ -231,7 +194,6 @@ export default function DashboardLearner() {
 
             {error && <p className="bg-red-50 text-red-600 p-4 rounded-lg text-sm mb-6 border border-red-100">{error}</p>}
 
-            {/* Show loading state */}
             {loading ? (
               <div className="flex justify-center items-center py-12">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -239,45 +201,42 @@ export default function DashboardLearner() {
               </div>
             ) : (
               <>
-            {/* Stats Grid - All from DB */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              <StatCard title="Total Lessons" value={totalLessons} note="Available in catalog" />
-              <StatCard title="My Progress" value={progressPercentage} note={`${completedLessonsCount} of ${totalLessons} completed`} noteColor="text-green-600" />
-              <StatCard title="Quizzes Passed" value={completedQuizzesCount} note="Verified by server" />
-              <StatCard title="Success Rate" value={`${successRate}%`} note="Overall completion" />
-            </div>
-
-            <div className="grid lg:grid-cols-2 gap-6 mt-8">
-              {/* Recent Lessons from DB */}
-              <div className="bg-white rounded-xl p-6 shadow-lg">
-                <h3 className="text-xl font-bold mb-4">Latest Lessons</h3>
-                <div className="space-y-4">
-                  {lessons.slice(0, 4).map((lesson) => (
-                    <div key={lesson._id} className="flex items-center justify-between border-b border-gray-50 pb-2">
-                      <div>
-                        <p className="text-sm font-medium">{lesson.title}</p>
-                        <p className="text-xs text-gray-400">{lesson.category}</p>
-                      </div>
-                      <Link to={`/lesson/${lesson._id}`} className="text-primary text-sm font-semibold hover:underline">Start</Link>
-                    </div>
-                  ))}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                  <StatCard title="Total Lessons" value={totalLessons} note="Available in catalog" />
+                  <StatCard title="My Progress" value={progressPercentage} note={`${completedLessonsCount} of ${totalLessons} completed`} noteColor="text-green-600" />
+                  <StatCard title="Quizzes Passed" value={completedQuizzesCount} note="Verified by server" />
+                  <StatCard title="Success Rate" value={`${successRate}%`} note="Overall completion" />
                 </div>
-              </div>
 
-              {/* Available Quizzes from DB */}
-              <div className="bg-white rounded-xl p-6 shadow-lg">
-                <h3 className="text-xl font-bold mb-4">Available Quizzes</h3>
-                <div className="space-y-4">
-                  {quizzes.slice(0, 4).map((quiz) => (
-                    <div key={quiz._id} className="flex items-center justify-between border-b border-gray-50 pb-2">
-                      <span className="text-sm font-medium">{quiz.title}</span>
-                      <Link to={`/quiz/${quiz._id}`} className="bg-blue-50 text-primary px-3 py-1 rounded text-xs font-bold hover:bg-primary hover:text-white transition">Take Quiz</Link>
+                <div className="grid lg:grid-cols-2 gap-6 mt-8">
+                  <div className="bg-white rounded-xl p-6 shadow-lg">
+                    <h3 className="text-xl font-bold mb-4">Latest Lessons</h3>
+                    <div className="space-y-4">
+                      {lessons.slice(0, 4).map((lesson) => (
+                        <div key={lesson._id} className="flex items-center justify-between border-b border-gray-50 pb-2">
+                          <div>
+                            <p className="text-sm font-medium">{lesson.title}</p>
+                            <p className="text-xs text-gray-400">{lesson.category}</p>
+                          </div>
+                          <Link to={`/lesson/${lesson._id}`} className="text-primary text-sm font-semibold hover:underline">Start</Link>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  </div>
+
+                  <div className="bg-white rounded-xl p-6 shadow-lg">
+                    <h3 className="text-xl font-bold mb-4">Available Quizzes</h3>
+                    <div className="space-y-4">
+                      {quizzes.slice(0, 4).map((quiz) => (
+                        <div key={quiz._id} className="flex items-center justify-between border-b border-gray-50 pb-2">
+                          <span className="text-sm font-medium">{quiz.title}</span>
+                          <Link to={`/quiz/${quiz._id}`} className="bg-blue-50 text-primary px-3 py-1 rounded text-xs font-bold hover:bg-primary hover:text-white transition">Take Quiz</Link>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-            </>
+              </>
             )}
           </div>
         </div>
