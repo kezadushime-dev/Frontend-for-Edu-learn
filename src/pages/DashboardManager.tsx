@@ -1,9 +1,10 @@
 ﻿import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { PrimaryNav, TopBar } from '../components/LayoutPieces';
 import { Sidebar } from '../components/Sidebars';
 import { uiStore } from '../data/uiStore';
 import { api } from '../utils/api';
-import { getQuizAnalytics } from '../services/api';
+import { getQuizAnalytics, getLessons, getQuizzes, deleteLesson, deleteQuiz } from '../services/api';
 
 export default function DashboardManager() {
   const [lessonCount, setLessonCount] = useState(0);
@@ -11,31 +12,52 @@ export default function DashboardManager() {
   const [stats, setStats] = useState<{ learners?: number } | null>(null);
   const [analytics, setAnalytics] = useState<any[]>([]);
   const [error, setError] = useState('');
+  const [lessons, setLessons] = useState<any[]>([]);
+  const [quizzes, setQuizzes] = useState<any[]>([]);
+
+  const loadData = async () => {
+    try {
+      const [lessonsData, quizzesData, analyticsRes] = await Promise.all([
+        getLessons().catch(() => []),
+        getQuizzes().catch(() => []),
+        getQuizAnalytics().catch(() => [])
+      ]);
+      setLessons(lessonsData);
+      setQuizzes(quizzesData);
+      setLessonCount(lessonsData.length);
+      setQuizCount(quizzesData.length);
+      setAnalytics(Array.isArray(analyticsRes) ? analyticsRes : []);
+      setStats({ learners: 0 });
+    } catch (err: any) {
+      setError(err?.message || 'Failed to load manager dashboard data.');
+    }
+  };
 
   useEffect(() => {
-    let mounted = true;
-    const load = async () => {
-      try {
-        const [lessonsRes, quizzesRes, analyticsRes] = await Promise.all([
-          api.lessons.list().catch(() => ({ data: { lessons: [] } })),
-          api.quizzes.list().catch(() => ({ data: { quizzes: [] } })),
-          getQuizAnalytics().catch(() => [])
-        ]);
-        if (!mounted) return;
-        setLessonCount(lessonsRes.data.lessons.length);
-        setQuizCount(quizzesRes.data.quizzes.length);
-        setAnalytics(Array.isArray(analyticsRes) ? analyticsRes : []);
-        setStats({ learners: 0 });
-      } catch (err: any) {
-        if (!mounted) return;
-        setError(err?.message || 'Failed to load manager dashboard data.');
-      }
-    };
-    load();
-    return () => {
-      mounted = false;
-    };
+    loadData();
   }, []);
+
+  const handleDeleteLesson = async (id: string) => {
+    if (window.confirm('Delete this lesson?')) {
+      try {
+        await deleteLesson(id);
+        loadData();
+      } catch (err) {
+        alert('Failed to delete lesson');
+      }
+    }
+  };
+
+  const handleDeleteQuiz = async (id: string) => {
+    if (window.confirm('Delete this quiz?')) {
+      try {
+        await deleteQuiz(id);
+        loadData();
+      } catch (err) {
+        alert('Failed to delete quiz');
+      }
+    }
+  };
 
   const quizStats = useMemo(() => {
     if (!analytics.length) return { passRate: 0, attempts: 0 };
@@ -130,6 +152,94 @@ export default function DashboardManager() {
                 <p className="text-sm text-gray-500">Learners</p>
                 <h3 className="text-3xl font-bold mt-2">{learnerCount}</h3>
                 <p className="text-xs text-gray-500 mt-2">From /admin/statistics</p>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl p-6 shadow-lg mt-8">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-bold">📘 Lessons</h3>
+                <Link to="/instructor/lesson-create" className="bg-primary text-white px-4 py-2 rounded-md text-sm font-semibold">
+                  Create Lesson
+                </Link>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-3 text-left font-semibold">Title</th>
+                      <th className="px-4 py-3 text-left font-semibold">Category</th>
+                      <th className="px-4 py-3 text-left font-semibold">Created By</th>
+                      <th className="px-4 py-3 text-left font-semibold">Date</th>
+                      <th className="px-4 py-3 text-left font-semibold">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {lessons.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="px-4 py-6 text-center text-gray-500">No lessons found</td>
+                      </tr>
+                    ) : (
+                      lessons.map((lesson) => (
+                        <tr key={lesson._id} className="border-t hover:bg-gray-50">
+                          <td className="px-4 py-3">{lesson.title}</td>
+                          <td className="px-4 py-3">{lesson.category}</td>
+                          <td className="px-4 py-3">{lesson.createdBy || lesson.instructor?.name || 'N/A'}</td>
+                          <td className="px-4 py-3">{new Date(lesson.createdAt || lesson.updatedAt).toLocaleDateString()}</td>
+                          <td className="px-4 py-3">
+                            <div className="flex gap-2">
+                              <Link to={`/lesson/${lesson._id}`} className="text-blue-600 hover:underline">View</Link>
+                              <Link to={`/instructor/lessons`} className="text-green-600 hover:underline">Edit</Link>
+                              <button onClick={() => handleDeleteLesson(lesson._id)} className="text-red-600 hover:underline">Delete</button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl p-6 shadow-lg mt-8">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-bold">📝 Quizzes</h3>
+                <Link to="/instructor/quiz-create" className="bg-primary text-white px-4 py-2 rounded-md text-sm font-semibold">
+                  Create Quiz
+                </Link>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-3 text-left font-semibold">Title</th>
+                      <th className="px-4 py-3 text-left font-semibold">Passing Score</th>
+                      <th className="px-4 py-3 text-left font-semibold">Created</th>
+                      <th className="px-4 py-3 text-left font-semibold">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {quizzes.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} className="px-4 py-6 text-center text-gray-500">No quizzes found</td>
+                      </tr>
+                    ) : (
+                      quizzes.map((quiz) => (
+                        <tr key={quiz._id} className="border-t hover:bg-gray-50">
+                          <td className="px-4 py-3">{quiz.title}</td>
+                          <td className="px-4 py-3">{quiz.passingScore}%</td>
+                          <td className="px-4 py-3">{new Date(quiz.createdAt).toLocaleDateString()}</td>
+                          <td className="px-4 py-3">
+                            <div className="flex gap-2">
+                              <Link to={`/quiz/${quiz._id}`} className="text-blue-600 hover:underline">View</Link>
+                              <Link to={`/instructor/quizzes`} className="text-green-600 hover:underline">Edit</Link>
+                              <button onClick={() => handleDeleteQuiz(quiz._id)} className="text-red-600 hover:underline">Delete</button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>

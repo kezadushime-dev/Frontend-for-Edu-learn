@@ -135,12 +135,41 @@ export default function InstructorLessons() {
           )}
 
           <div className="bg-white rounded-xl shadow-lg p-6">
-            <AdminTable
-              columns={uiStore.models.lessons}
-              rows={lessons}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-            />
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left font-semibold">Title</th>
+                    <th className="px-4 py-3 text-left font-semibold">Category</th>
+                    <th className="px-4 py-3 text-left font-semibold">Created By</th>
+                    <th className="px-4 py-3 text-left font-semibold">Date</th>
+                    <th className="px-4 py-3 text-left font-semibold">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {lessons.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-6 text-center text-gray-500">No lessons found</td>
+                    </tr>
+                  ) : (
+                    lessons.map((lesson) => (
+                      <tr key={lesson._id} className="border-t hover:bg-gray-50">
+                        <td className="px-4 py-3">{lesson.title}</td>
+                        <td className="px-4 py-3">{lesson.category}</td>
+                        <td className="px-4 py-3">{lesson.createdBy || lesson.instructor?.name || 'N/A'}</td>
+                        <td className="px-4 py-3">{new Date(lesson.createdAt || lesson.updatedAt).toLocaleDateString()}</td>
+                        <td className="px-4 py-3">
+                          <div className="flex gap-2">
+                            <button onClick={() => handleEdit(lesson)} className="text-green-600 hover:underline">Edit</button>
+                            <button onClick={() => handleDelete(lesson._id || lesson.id)} className="text-red-600 hover:underline">Delete</button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </section>

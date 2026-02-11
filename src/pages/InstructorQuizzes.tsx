@@ -53,7 +53,7 @@ export default function InstructorQuizzes() {
 
   const handleSaveEdit = async () => {
     try {
-      await updateQuiz(selectedQuiz.id, formData);
+      await updateQuiz(selectedQuiz._id || selectedQuiz.id, formData);
       fetchQuizzes();
       setEditMode(false);
     } catch (err) {
@@ -133,12 +133,39 @@ export default function InstructorQuizzes() {
           )}
 
           <div className="bg-white rounded-xl shadow-lg p-6">
-            <AdminTable
-              columns={uiStore.models.quizzes}
-              rows={quizzes}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-            />
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left font-semibold">Title</th>
+                    <th className="px-4 py-3 text-left font-semibold">Passing Score</th>
+                    <th className="px-4 py-3 text-left font-semibold">Created</th>
+                    <th className="px-4 py-3 text-left font-semibold">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {quizzes.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="px-4 py-6 text-center text-gray-500">No quizzes found</td>
+                    </tr>
+                  ) : (
+                    quizzes.map((quiz) => (
+                      <tr key={quiz._id} className="border-t hover:bg-gray-50">
+                        <td className="px-4 py-3">{quiz.title}</td>
+                        <td className="px-4 py-3">{quiz.passingScore}%</td>
+                        <td className="px-4 py-3">{new Date(quiz.createdAt).toLocaleDateString()}</td>
+                        <td className="px-4 py-3">
+                          <div className="flex gap-2">
+                            <button onClick={() => handleEdit(quiz)} className="text-green-600 hover:underline">Edit</button>
+                            <button onClick={() => handleDelete(quiz._id)} className="text-red-600 hover:underline">Delete</button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </section>

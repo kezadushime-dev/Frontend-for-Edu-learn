@@ -19,6 +19,11 @@ export const getLessons = async (instructorId?: string) => {
   return response.data.data?.lessons || [];
 };
 
+export const getLessonByName = async (name: string) => {
+  const lessons = await getLessons();
+  return lessons.find((l: any) => l.title.toLowerCase().includes(name.toLowerCase()));
+};
+
 export const getLesson = async (id: string) => {
   const response = await axios.get(`${API_BASE_URL}/lessons/${id}`, { headers: getAuthHeaders() });
   return response.data.data?.lesson || response.data;

@@ -97,27 +97,15 @@ export const uiStore = {
       { key: 'updatedAt', label: 'Updated' }
     ],
     lessons: [
-      { key: '_id', label: 'ID' },
       { key: 'title', label: 'Title' },
-      { key: 'description', label: 'Description' },
-      { key: 'content', label: 'Content' },
       { key: 'category', label: 'Category' },
-      { key: 'order', label: 'Order' },
-      { key: 'images', label: 'Images' },
       { key: 'createdBy', label: 'Created By' },
-      { key: 'createdAt', label: 'Created' },
       { key: 'updatedAt', label: 'Updated' }
     ],
     quizzes: [
-      { key: '_id', label: 'ID' },
-      { key: 'lesson', label: 'Lesson' },
       { key: 'title', label: 'Title' },
-      { key: 'questions', label: 'Questions' },
       { key: 'passingScore', label: 'Passing Score' },
-      { key: 'isActive', label: 'Active' },
-      { key: 'createdBy', label: 'Created By' },
-      { key: 'createdAt', label: 'Created' },
-      { key: 'updatedAt', label: 'Updated' }
+      { key: 'createdAt', label: 'Created' }
     ],
     questions: [
       { key: 'questionText', label: 'Question' },

@@ -19,6 +19,7 @@ import InstructorLessons from './pages/InstructorLessons';
 import InstructorLessonCreate from './pages/InstructorLessonCreate';
 import InstructorQuizzes from './pages/InstructorQuizzes';
 import InstructorQuizCreate from './pages/InstructorQuizCreate';
+import SeedData from './pages/SeedData';
 import { useLucide } from './utils/useLucide';
 
 function App() {
@@ -52,6 +53,7 @@ function App() {
       <Route path="instructor/lesson-create" element={<InstructorLessonCreate />} />
       <Route path="instructor/quizzes" element={<InstructorQuizzes />} />
       <Route path="instructor/quiz-create" element={<InstructorQuizCreate />} />
+      <Route path="seed-data" element={<SeedData />} />
 
       <Route path="*" element={<Navigate to="/home" replace />} />
     </Routes>
