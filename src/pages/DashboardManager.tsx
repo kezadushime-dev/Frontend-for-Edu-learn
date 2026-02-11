@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { PrimaryNav, TopBar } from '../components/LayoutPieces';
 import { Sidebar } from '../components/Sidebars';
 import { uiStore } from '../data/uiStore';
-import { api } from '../utils/api';
 import { getQuizAnalytics, getLessons, getQuizzes, deleteLesson, deleteQuiz } from '../services/api';
 
 export default function DashboardManager() {

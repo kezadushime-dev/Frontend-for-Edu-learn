@@ -2,13 +2,23 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { PrimaryNav, TopBar } from '../components/LayoutPieces';
 import { Sidebar } from '../components/Sidebars';
-import { AdminTable } from '../components/AdminTable';
 import { AdminFormFields } from '../components/AdminFormFields';
 import { uiStore } from '../data/uiStore';
 import { getLessons, updateLesson, deleteLesson } from '../services/api';
 
+interface Lesson {
+  _id?: string;
+  id?: string;
+  title: string;
+  category: string;
+  createdBy?: string;
+  instructor?: { name: string };
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export default function InstructorLessons() {
-  const [lessons, setLessons] = useState([]);
+  const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [editMode, setEditMode] = useState(false);

@@ -7,7 +7,12 @@ import { uiStore } from '../data/uiStore';
 import { createLesson } from '../services/api';
 
 export default function InstructorLessonCreate() {
-  const [formData, setFormData] = useState({});
+  const [formData, setFormData] = useState<{
+    title?: string;
+    description?: string;
+    content?: string;
+    category?: string;
+  }>({});
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
