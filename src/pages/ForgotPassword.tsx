@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 ﻿import { type FormEvent, useState } from 'react';
+=======
+﻿import { useState } from 'react';
+>>>>>>> admin
 import { Link } from 'react-router-dom';
 import { Footer, PrimaryNav, TopBar } from '../components/LayoutPieces';
 import { api } from '../utils/api';
@@ -8,7 +12,11 @@ export default function ForgotPassword() {
   const [message, setMessage] = useState<{ text: string; type: 'error' | 'success' } | null>(null);
   const [loading, setLoading] = useState(false);
 
+<<<<<<< HEAD
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+=======
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+>>>>>>> admin
     event.preventDefault();
     setLoading(true);
     setMessage(null);

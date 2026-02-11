@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Footer, PrimaryNav, TopBar } from '../components/LayoutPieces';
+<<<<<<< HEAD
 import { lessonCourses, quizCourses } from '../data/uiStore';
 
 const iconMap: Record<string, string> = {
@@ -21,6 +22,9 @@ const countQuizzes = (courseId: string) => {
   const course = quizCourses.find((item) => item.id === courseId);
   return course ? course.quizzes.length : 0;
 };
+=======
+
+>>>>>>> admin
 
 export default function Home() {
   return (
@@ -202,6 +206,7 @@ export default function Home() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-10">
+<<<<<<< HEAD
             {lessonCourses.map((course, idx) => {
               const icon = iconMap[course.id] || 'book-open';
               const level = levelMap[course.id] || 'Beginner';
@@ -247,6 +252,28 @@ export default function Home() {
                 </Link>
               );
             })}
+=======
+            <div className="p-10 bg-white shadow-lg rounded-xl hover:shadow-2xl transition-all duration-500 hover-lift group glass-effect border border-gray-100 animate-scaleIn">
+              <div className="flex items-start justify-between gap-4 mb-6">
+                <div className="w-16 h-16 bg-blue-100 text-primary rounded-lg flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all duration-300 animate-glow">
+                  <i data-lucide="book-open" className="w-6 h-6"></i>
+                </div>
+                <span className="text-xs font-bold uppercase tracking-widest text-primary bg-blue-50 px-3 py-1 rounded-full">
+                  Beginner
+                </span>
+              </div>
+              <h3 className="text-xl font-bold mb-3 group-hover:text-primary transition-all duration-300">Get Started</h3>
+              <p className="text-gray-600 group-hover:text-gray-700 transition-all duration-300 mb-6">
+                Start learning with interactive lessons and quizzes.
+              </p>
+              <div className="mt-8 flex items-center justify-between">
+                <Link to="/login" className="font-semibold text-dark">Start course</Link>
+                <span className="inline-flex items-center gap-2 text-primary font-semibold">
+                  Open <i data-lucide="arrow-right" className="w-4 h-4"></i>
+                </span>
+              </div>
+            </div>
+>>>>>>> admin
           </div>
 
           <div className="mt-14 grid md:grid-cols-3 gap-6 animate-fadeInUp">

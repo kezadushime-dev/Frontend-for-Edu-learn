@@ -90,7 +90,14 @@ export const api = {
     list: async () => request<{ data: { lessons: any[] } }>('/lessons'),
     get: async (id: string) => request<{ data: { lesson: any } }>(`/lessons/${id}`),
     create: async (formData: FormData) =>
+<<<<<<< HEAD
       request<{ data: { lesson: any } }>('/lessons', { method: 'POST', body: formData })
+=======
+      request<{ data: { lesson: any } }>('/lessons', { method: 'POST', body: formData }),
+    update: async (id: string, formData: FormData) =>
+      request<{ data: { lesson: any } }>(`/lessons/${id}`, { method: 'PATCH', body: formData }),
+    delete: async (id: string) => request(`/lessons/${id}`, { method: 'DELETE' })
+>>>>>>> admin
   },
 
   quizzes: {
@@ -98,6 +105,11 @@ export const api = {
     get: async (id: string) => request<{ data: { quiz: any } }>(`/quizzes/${id}`),
     byLesson: async (lessonId: string) => request<{ data: { quiz: any } }>(`/quizzes/lesson/${lessonId}`),
     create: async (payload: any) => request<{ data: { quiz: any } }>('/quizzes', { method: 'POST', json: payload }),
+<<<<<<< HEAD
+=======
+    update: async (id: string, payload: any) => request<{ data: { quiz: any } }>(`/quizzes/${id}`, { method: 'PATCH', json: payload }),
+    delete: async (id: string) => request(`/quizzes/${id}`, { method: 'DELETE' }),
+>>>>>>> admin
     submit: async (id: string, answers: Array<{ selectedOptionIndex: number }>) =>
       request<{ data: { result: any } }>(`/quizzes/${id}/submit`, { method: 'POST', json: { answers } }),
     analytics: async () => request<{ data: { analytics: any[] } }>('/quizzes/analytics')
@@ -105,8 +117,16 @@ export const api = {
 
   admin: {
     users: async () => request<{ data: { users: any[] } }>('/admin/users'),
+<<<<<<< HEAD
     updateRole: async (id: string, role: string) => request<{ data: { user: any } }>(`/admin/users/${id}`, { method: 'PATCH', json: { role } }),
     deleteUser: async (id: string) => request(`/admin/users/${id}`, { method: 'DELETE' }),
+=======
+    createUser: async (payload: { name: string; email: string; password: string; role: string }) =>
+      request<{ data: { user: any } }>('/admin/users', { method: 'POST', json: payload }),
+    deleteUser: async (id: string) => request(`/admin/users/${id}`, { method: 'DELETE' }),
+    updateRole: async (id: string, role: string) => 
+      request<{ data: { user: any } }>(`/admin/users/${id}/role`, { method: 'PATCH', json: { role } }),
+>>>>>>> admin
     statistics: async () => request<{ data: { statistics: any } }>('/admin/statistics')
   }
 };

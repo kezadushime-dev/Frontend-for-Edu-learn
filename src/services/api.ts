@@ -19,11 +19,14 @@ export const getLessons = async (instructorId?: string) => {
   return response.data.data?.lessons || [];
 };
 
+<<<<<<< HEAD
 export const getLessonByName = async (name: string) => {
   const lessons = await getLessons();
   return lessons.find((l: any) => l.title.toLowerCase().includes(name.toLowerCase()));
 };
 
+=======
+>>>>>>> admin
 export const getLesson = async (id: string) => {
   const response = await axios.get(`${API_BASE_URL}/lessons/${id}`, { headers: getAuthHeaders() });
   return response.data.data?.lesson || response.data;
@@ -41,12 +44,21 @@ export const createLesson = async (lessonData: any) => {
     if (Array.isArray(lessonData.images)) {
       lessonData.images.forEach((img: any) => {
         if (img instanceof File) {
+<<<<<<< HEAD
           formData.append('images', img);
         }
       });
     } else if (lessonData.images instanceof FileList) {
       Array.from(lessonData.images).forEach((file) => {
         formData.append('images', file);
+=======
+          formData.append('images', img as Blob);
+        }
+      });
+    } else if (lessonData.images instanceof FileList) {
+      Array.from(lessonData.images as FileList).forEach((file) => {
+        formData.append('images', file as Blob);
+>>>>>>> admin
       });
     }
   }
@@ -69,12 +81,21 @@ export const updateLesson = async (lessonId: string, lessonData: any) => {
     if (Array.isArray(lessonData.images)) {
       lessonData.images.forEach((img: any) => {
         if (img instanceof File) {
+<<<<<<< HEAD
           formData.append('images', img);
         }
       });
     } else if (lessonData.images instanceof FileList) {
       Array.from(lessonData.images).forEach((file) => {
         formData.append('images', file);
+=======
+          formData.append('images', img as Blob);
+        }
+      });
+    } else if (lessonData.images instanceof FileList) {
+      Array.from(lessonData.images as FileList).forEach((file) => {
+        formData.append('images', file as Blob);
+>>>>>>> admin
       });
     }
   }

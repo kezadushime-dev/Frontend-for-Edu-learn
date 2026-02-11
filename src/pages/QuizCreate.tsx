@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 ﻿import { FormEvent, useState } from 'react';
+=======
+﻿import { useState } from 'react';
+>>>>>>> admin
 import { Link, useNavigate } from 'react-router-dom';
 import { PrimaryNav, TopBar } from '../components/LayoutPieces';
 import { Sidebar } from '../components/Sidebars';
@@ -35,7 +39,11 @@ export default function QuizCreate() {
     setQuestions((prev) => prev.filter((_, i) => i !== index));
   };
 
+<<<<<<< HEAD
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+=======
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+>>>>>>> admin
     event.preventDefault();
     setLoading(true);
     setMessage(null);

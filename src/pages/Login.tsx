@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import { FormEvent, useState } from 'react';
+=======
+import { useState } from 'react';
+>>>>>>> admin
 import { Link, useNavigate } from 'react-router-dom';
 import { Footer, PrimaryNav, TopBar } from '../components/LayoutPieces';
 import { api } from '../utils/api';
@@ -11,7 +15,11 @@ export default function Login() {
   const [message, setMessage] = useState<{ text: string; type: 'error' | 'success' } | null>(null);
   const [loading, setLoading] = useState(false);
 
+<<<<<<< HEAD
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+=======
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+>>>>>>> admin
     event.preventDefault();
     setLoading(true);
     setMessage(null);
@@ -21,7 +29,11 @@ export default function Login() {
       setMessage({ text: 'Login successful. Redirecting...', type: 'success' });
       const role = user.role || 'learner';
       const redirect =
+<<<<<<< HEAD
         role === 'admin' ? '/dashboard-admin' : role === 'instructor' ? '/dashboard-manager' : '/dashboard-learner';
+=======
+        role === 'admin' ? '/dashboard-admin' : role === 'instructor' ? '/dashboard-instructor' : '/dashboard-learner';
+>>>>>>> admin
       window.setTimeout(() => {
         navigate(redirect);
       }, 500);

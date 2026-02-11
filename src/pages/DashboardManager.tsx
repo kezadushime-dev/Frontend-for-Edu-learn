@@ -1,13 +1,23 @@
 ﻿import { useEffect, useMemo, useState } from 'react';
+<<<<<<< HEAD
 import { Link } from 'react-router-dom';
 import { PrimaryNav, TopBar } from '../components/LayoutPieces';
 import { Sidebar } from '../components/Sidebars';
 import { uiStore } from '../data/uiStore';
 import { getQuizAnalytics, getLessons, getQuizzes, deleteLesson, deleteQuiz } from '../services/api';
+=======
+import { PrimaryNav, TopBar } from '../components/LayoutPieces';
+import { Sidebar } from '../components/Sidebars';
+import { AdminTable } from '../components/AdminTable';
+import { uiStore } from '../data/uiStore';
+import { api } from '../utils/api';
+import { getQuizAnalytics } from '../services/api';
+>>>>>>> admin
 
 export default function DashboardManager() {
   const [lessonCount, setLessonCount] = useState(0);
   const [quizCount, setQuizCount] = useState(0);
+<<<<<<< HEAD
   const [stats, setStats] = useState<{ learners?: number } | null>(null);
   const [analytics, setAnalytics] = useState<any[]>([]);
   const [error, setError] = useState('');
@@ -58,6 +68,41 @@ export default function DashboardManager() {
     }
   };
 
+=======
+  const [lessons, setLessons] = useState<any[]>([]);
+  const [quizzes, setQuizzes] = useState<any[]>([]);
+  const [stats, setStats] = useState<{ learners?: number } | null>(null);
+  const [analytics, setAnalytics] = useState<any[]>([]);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      try {
+        const [lessonsRes, quizzesRes, analyticsRes] = await Promise.all([
+          api.lessons.list().catch(() => ({ data: { lessons: [] } })),
+          api.quizzes.list().catch(() => ({ data: { quizzes: [] } })),
+          getQuizAnalytics().catch(() => [])
+        ]);
+        if (!mounted) return;
+        setLessons(lessonsRes.data.lessons || []);
+        setLessonCount(lessonsRes.data.lessons.length);
+        setQuizzes(quizzesRes.data.quizzes || []);
+        setQuizCount(quizzesRes.data.quizzes.length);
+        setAnalytics(Array.isArray(analyticsRes) ? analyticsRes : []);
+        setStats({ learners: 0 });
+      } catch (err: any) {
+        if (!mounted) return;
+        setError(err?.message || 'Failed to load manager dashboard data.');
+      }
+    };
+    load();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+>>>>>>> admin
   const quizStats = useMemo(() => {
     if (!analytics.length) return { passRate: 0, attempts: 0 };
     const totalAttempts = analytics.reduce((sum, item) => sum + (item.attempts || 0), 0);
@@ -69,6 +114,49 @@ export default function DashboardManager() {
   const learnerCount = stats?.learners || 0;
   const activeCohorts = Math.max(1, Math.ceil(learnerCount / 5));
 
+<<<<<<< HEAD
+=======
+  // Define custom columns for manager dashboard
+  const lessonColumns = [
+    { key: 'title', label: 'Lesson Title' },
+    { key: 'category', label: 'Category' },
+    { key: 'createdBy', label: 'Instructor' },
+    { key: 'createdAt', label: 'Date Created' }
+  ];
+
+  const quizColumns = [
+    { key: 'title', label: 'Quiz Title' },
+    { key: 'questions', label: 'Questions' },
+    { key: 'passingScore', label: 'Pass Score' },
+    { key: 'status', label: 'Status' },
+    { key: 'createdAt', label: 'Date Created' }
+  ];
+
+  const lessonRows = lessons.map((lesson) => {
+    const createdAt = lesson.createdAt ? new Date(lesson.createdAt).toLocaleDateString() : '—';
+
+    return {
+      title: lesson.title || '—',
+      category: lesson.category || '—',
+      createdBy: lesson.instructor?.name || lesson.createdBy?.name || lesson.createdBy || '—',
+      createdAt
+    };
+  });
+
+  const quizRows = quizzes.map((quiz) => {
+    const createdAt = quiz.createdAt ? new Date(quiz.createdAt).toLocaleDateString() : '—';
+    const questionCount = Array.isArray(quiz.questions) ? quiz.questions.length : 0;
+
+    return {
+      title: quiz.title || '—',
+      questions: questionCount,
+      passingScore: quiz.passingScore ? `${quiz.passingScore}%` : '—',
+      status: quiz.isActive ? '✓ Active' : '✗ Inactive',
+      createdAt
+    };
+  });
+
+>>>>>>> admin
   return (
     <div className="bg-[#f5f8ff] text-slate-800">
       <TopBar />
@@ -154,6 +242,7 @@ export default function DashboardManager() {
               </div>
             </div>
 
+<<<<<<< HEAD
             <div className="bg-white rounded-xl p-6 shadow-lg mt-8">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-xl font-bold">📘 Lessons</h3>
@@ -239,6 +328,25 @@ export default function DashboardManager() {
                     )}
                   </tbody>
                 </table>
+=======
+            <div className="mt-8">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-2xl font-bold gradient-text">Manage Lessons</h3>
+                <span className="text-sm text-gray-500 bg-blue-50 px-3 py-1 rounded-full font-semibold">{lessons.length} Total</span>
+              </div>
+              <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
+                <AdminTable columns={lessonColumns} rows={lessonRows} hideActions maxRows={5} />
+              </div>
+            </div>
+
+            <div className="mt-8">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-2xl font-bold gradient-text">Manage Quizzes</h3>
+                <span className="text-sm text-gray-500 bg-blue-50 px-3 py-1 rounded-full font-semibold">{quizzes.length} Total</span>
+              </div>
+              <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
+                <AdminTable columns={quizColumns} rows={quizRows} hideActions maxRows={5} />
+>>>>>>> admin
               </div>
             </div>
           </div>
