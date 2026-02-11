@@ -2,13 +2,19 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { PrimaryNav, TopBar } from '../components/LayoutPieces';
 import { Sidebar } from '../components/Sidebars';
-import { AdminTable } from '../components/AdminTable';
 import { AdminFormFields } from '../components/AdminFormFields';
 import { uiStore } from '../data/uiStore';
 import { getQuizzes, updateQuiz, deleteQuiz } from '../services/api';
 
+interface Quiz {
+  _id: string;
+  title: string;
+  passingScore: number;
+  createdAt: string;
+}
+
 export default function InstructorQuizzes() {
-  const [quizzes, setQuizzes] = useState([]);
+  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [editMode, setEditMode] = useState(false);

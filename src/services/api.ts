@@ -49,7 +49,7 @@ export const createLesson = async (lessonData: any) => {
         }
       });
     } else if (lessonData.images instanceof FileList) {
-      Array.from(lessonData.images).forEach((file) => {
+      Array.from(lessonData.images as FileList).forEach((file) => {
         formData.append('images', file);
 =======
           formData.append('images', img as Blob);
@@ -86,7 +86,7 @@ export const updateLesson = async (lessonId: string, lessonData: any) => {
         }
       });
     } else if (lessonData.images instanceof FileList) {
-      Array.from(lessonData.images).forEach((file) => {
+      Array.from(lessonData.images as FileList).forEach((file) => {
         formData.append('images', file);
 =======
           formData.append('images', img as Blob);
