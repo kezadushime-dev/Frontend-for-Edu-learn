@@ -1,4 +1,4 @@
-import { createLesson, createQuiz, getLessons } from '../services/api';
+import { api } from './api';
 import { sampleLessons, sampleQuizzes } from '../data/seedData';
 
 /**
@@ -15,7 +15,7 @@ export const seedDatabase = async () => {
     
     for (const lesson of sampleLessons) {
       try {
-        const created = await createLesson(lesson);
+        const created = await api.lessons.create(lesson as any);
         createdLessons.push(created);
         console.log(`✅ Created lesson: ${lesson.title}`);
       } catch (err) {
@@ -25,7 +25,8 @@ export const seedDatabase = async () => {
     
     // Step 2: Get all lessons to map titles to IDs
     console.log('🔍 Fetching all lessons...');
-    const allLessons = await getLessons();
+    const res = await api.lessons.list();
+    const allLessons = res.data.lessons;
     
     // Step 3: Create quizzes
     console.log('📝 Creating sample quizzes...');
@@ -49,7 +50,7 @@ export const seedDatabase = async () => {
           questions: quiz.questions
         };
         
-        await createQuiz(quizData);
+        await api.quizzes.create(quizData);
         console.log(`✅ Created quiz: ${quiz.title}`);
       } catch (err) {
         console.error(`❌ Failed to create quiz: ${quiz.title}`, err);

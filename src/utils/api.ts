@@ -90,7 +90,8 @@ export const api = {
     list: async () => request<{ data: { lessons: any[] } }>('/lessons'),
     get: async (id: string) => request<{ data: { lesson: any } }>(`/lessons/${id}`),
     create: async (formData: FormData) =>
-      request<{ data: { lesson: any } }>('/lessons', { method: 'POST', body: formData })
+      request<{ data: { lesson: any } }>('/lessons', { method: 'POST', body: formData }),
+    delete: async (id: string) => request(`/lessons/${id}`, { method: 'DELETE' })
   },
 
   quizzes: {
@@ -100,16 +101,16 @@ export const api = {
     create: async (payload: any) => request<{ data: { quiz: any } }>('/quizzes', { method: 'POST', json: payload }),
     submit: async (id: string, answers: Array<{ selectedOptionIndex: number }>) =>
       request<{ data: { result: any } }>(`/quizzes/${id}/submit`, { method: 'POST', json: { answers } }),
-    analytics: async () => request<{ data: { analytics: any[] } }>('/quizzes/analytics')
+    analytics: async () => request<{ data: { analytics: any[] } }>('/quizzes/analytics'),
+    delete: async (id: string) => request(`/quizzes/${id}`, { method: 'DELETE' })
   },
 
   admin: {
     users: async () => request<{ data: { users: any[] } }>('/admin/users'),
     updateRole: async (id: string, role: string) => request<{ data: { user: any } }>(`/admin/users/${id}`, { method: 'PATCH', json: { role } }),
-    createUser: async (payload: { name: string; email: string; password: string; role: string }) =>
-      request<{ data: { user: any } }>('/admin/users', { method: 'POST', json: payload }),
     deleteUser: async (id: string) => request(`/admin/users/${id}`, { method: 'DELETE' }),
-    statistics: async () => request<{ data: { statistics: any } }>('/admin/statistics')
+    statistics: async () => request<{ data: { statistics: any } }>('/admin/statistics'),
+    createUser: async (userData: any) => request<{ data: { user: any } }>('/admin/users', { method: 'POST', json: userData })
   }
 };
 

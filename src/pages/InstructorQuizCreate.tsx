@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { PrimaryNav, TopBar } from '../components/LayoutPieces';
 import { Sidebar } from '../components/Sidebars';
-import { createQuiz, getLessons } from '../services/api';
+import { api } from '../utils/api';
 
 export default function InstructorQuizCreate() {
   const [lessonName, setLessonName] = useState('');
@@ -25,8 +25,8 @@ export default function InstructorQuizCreate() {
   useEffect(() => {
     const fetchLessons = async () => {
       try {
-        const data = await getLessons();
-        setLessons(data);
+        const res = await api.lessons.list();
+        setLessons(res.data.lessons);
       } catch (err) {
         console.error('Failed to fetch lessons');
       }
@@ -98,7 +98,7 @@ export default function InstructorQuizCreate() {
         passingScore,
         isActive
       };
-      await createQuiz(quizData);
+      await api.quizzes.create(quizData);
       alert('Quiz created successfully!');
       navigate('/instructor/quizzes');
     } catch (err: any) {

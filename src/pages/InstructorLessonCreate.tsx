@@ -4,7 +4,7 @@ import { PrimaryNav, TopBar } from '../components/LayoutPieces';
 import { Sidebar } from '../components/Sidebars';
 import { AdminFormFields } from '../components/AdminFormFields';
 import { uiStore } from '../data/uiStore';
-import { createLesson } from '../services/api';
+import { api } from '../utils/api';
 
 export default function InstructorLessonCreate() {
   const [formData, setFormData] = useState<{
@@ -22,7 +22,7 @@ export default function InstructorLessonCreate() {
         alert('Please fill in all required fields');
         return;
       }
-      await createLesson(formData);
+      await api.lessons.create(formData as any);
       alert('Lesson created successfully!');
       navigate('/instructor/lessons');
     } catch (err: any) {

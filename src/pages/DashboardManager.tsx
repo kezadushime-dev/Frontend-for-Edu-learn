@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';//ifasha gukora navigation hagati y'amap
 import { PrimaryNav, TopBar } from '../components/LayoutPieces';//ifasha gukoresha components za layout zateguwe mbere kugirango habeho consistency mu design
 import { Sidebar } from '../components/Sidebars';//ifasha gukoresha sidebar component yateguwe mbere kugirango habeho consistency mu design
 import { uiStore } from '../data/uiStore';//ifasha gukoresha global state management yateguwe mbere kugirango habeho centralized data handling
-import { getQuizAnalytics, getLessons, getQuizzes, deleteLesson, deleteQuiz } from '../services/api';//ifasha gukoresha functions zateguwe mbere zo gukora API calls kugirango habeho separation of concerns no gutuma code isukuye kandi reusable
+import { api } from '../utils/api';
 
 export default function DashboardManager() {
   const [lessonCount, setLessonCount] = useState(0);
@@ -16,10 +16,10 @@ export default function DashboardManager() {
 
   const loadData = async () => {
     try {
-      const [lessonsData, quizzesData, analyticsRes] = await Promise.all([// promise.all ifasha kuraninga all three request at the same time for better performance
-        getLessons().catch(() => []),//catch {} ifasha gufata error niba request ya lessons itagenze neza, kandi ikagarura array y'ubusa kugirango application idahagarara
-        getQuizzes().catch(() => []),
-        getQuizAnalytics().catch(() => [])
+      const [lessonsData, quizzesData, analyticsRes] = await Promise.all([
+        api.lessons.list().then(r => r.data.lessons).catch(() => []),
+        api.quizzes.list().then(r => r.data.quizzes).catch(() => []),
+        api.quizzes.analytics().then(r => r.data.analytics).catch(() => [])
       ]);
       //ifasha gukora update state nyuma yo kubona data, kandi ifasha kureba niba data ari array mbere yo kuyishyira muri state
       setLessons(lessonsData);
@@ -43,7 +43,7 @@ export default function DashboardManager() {
   const handleDeleteLesson = async (id: string) => {
     if (window.confirm('Delete this lesson?')) {
       try {
-        await deleteLesson(id);
+        await api.lessons.delete(id);
         loadData();
       } catch (err) {
         alert('Failed to delete lesson');
@@ -54,7 +54,7 @@ export default function DashboardManager() {
   const handleDeleteQuiz = async (id: string) => {
     if (window.confirm('Delete this quiz?')) {
       try {
-        await deleteQuiz(id);
+        await api.quizzes.delete(id);
         loadData();
       } catch (err) {
         alert('Failed to delete quiz');

@@ -4,7 +4,7 @@ import { PrimaryNav, TopBar } from '../components/LayoutPieces';
 import { Sidebar } from '../components/Sidebars';
 import { AdminFormFields } from '../components/AdminFormFields';
 import { uiStore } from '../data/uiStore';
-import { getQuizzes, updateQuiz, deleteQuiz } from '../services/api';
+import { api } from '../utils/api';
 
 interface Quiz {
   _id: string;
@@ -18,28 +18,13 @@ export default function InstructorQuizzes() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [editMode, setEditMode] = useState(false);
-  const [selectedQuiz, setSelectedQuiz] = useState<any>(null);
+  const [_selectedQuiz, setSelectedQuiz] = useState<any>(null);
   const [formData, setFormData] = useState({});
-
-  const getInstructorId = () => {
-    const userStr = localStorage.getItem('edulearn_user');
-    if (userStr) {
-      try {
-        const user = JSON.parse(userStr);
-        return user._id || user.id;
-      } catch (e) {
-        return null;
-      }
-    }
-    return null;
-  };
-
-  const instructorId = getInstructorId();
 
   const fetchQuizzes = async () => {
     try {
-      const data = await getQuizzes(instructorId || undefined);
-      setQuizzes(data);
+      const res = await api.quizzes.list();
+      setQuizzes(res.data.quizzes);
     } catch (err) {
       setError('Failed to fetch quizzes');
     } finally {
@@ -59,7 +44,7 @@ export default function InstructorQuizzes() {
 
   const handleSaveEdit = async () => {
     try {
-      await updateQuiz(selectedQuiz._id || selectedQuiz.id, formData);
+      await api.quizzes.create(formData);
       fetchQuizzes();
       setEditMode(false);
     } catch (err) {
@@ -70,7 +55,7 @@ export default function InstructorQuizzes() {
   const handleDelete = async (id: string) => {
     if (window.confirm('Delete quiz?')) {
       try {
-        await deleteQuiz(id);
+        await api.quizzes.delete(id);
         fetchQuizzes();
       } catch (err) {
         alert('Failed to delete quiz');

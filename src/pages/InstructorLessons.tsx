@@ -4,7 +4,7 @@ import { PrimaryNav, TopBar } from '../components/LayoutPieces';
 import { Sidebar } from '../components/Sidebars';
 import { AdminFormFields } from '../components/AdminFormFields';
 import { uiStore } from '../data/uiStore';
-import { getLessons, updateLesson, deleteLesson } from '../services/api';
+import { api } from '../utils/api';
 
 interface Lesson {
   _id?: string;
@@ -25,25 +25,10 @@ export default function InstructorLessons() {
   const [selectedLesson, setSelectedLesson] = useState<any>(null);
   const [formData, setFormData] = useState({});
 
-  const getInstructorId = () => {
-    const userStr = localStorage.getItem('edulearn_user');
-    if (userStr) {
-      try {
-        const user = JSON.parse(userStr);
-        return user._id || user.id;
-      } catch (e) {
-        return null;
-      }
-    }
-    return null;
-  };
-
-  const instructorId = getInstructorId();
-
   const fetchLessons = async () => {
     try {
-      const data = await getLessons(instructorId || undefined);
-      setLessons(data);
+      const res = await api.lessons.list();
+      setLessons(res.data.lessons);
     } catch (err) {
       setError('Failed to fetch lessons');
     } finally {
@@ -63,7 +48,7 @@ export default function InstructorLessons() {
 
   const handleSaveEdit = async () => {
     try {
-      await updateLesson(selectedLesson._id || selectedLesson.id, formData);
+      await api.lessons.delete(selectedLesson._id || selectedLesson.id);
       alert('Lesson updated successfully!');
       fetchLessons();
       setEditMode(false);
@@ -75,7 +60,7 @@ export default function InstructorLessons() {
   const handleDelete = async (id: string) => {
     if (window.confirm('Delete lesson?')) {
       try {
-        await deleteLesson(id);
+        await api.lessons.delete(id);
         alert('Lesson deleted successfully!');
         fetchLessons();
       } catch (err: any) {
