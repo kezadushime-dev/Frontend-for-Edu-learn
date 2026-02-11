@@ -31,7 +31,7 @@ export default function Home() {
       <section id="home" className="relative h-[650px] flex items-center overflow-hidden pt-24">
         <div
           className="absolute inset-0 bg-cover bg-center transition-transform duration-1000"
-          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1522202176988-66273c2fd55f')" }}
+          style={{ backgroundImage: "url('Gemini_Generated_Image_ot0nu0ot0nu0ot0n.png')" }}
         ></div>
         <div className="absolute inset-0 bg-black/60"></div>
         <div className="relative z-10 max-w-7xl mx-auto px-6 text-white">
@@ -116,7 +116,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-16 items-center">
           <div className="relative animate-slideInLeft">
             <img
-              src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f"
+              src="Gemini_Generated_Image_ot0nu0ot0nu0ot0n.png"
               className="rounded-lg shadow-xl transition-transform duration-300 hover:scale-105"
               alt="Students learning"
             />

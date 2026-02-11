@@ -93,11 +93,11 @@ export default function DashboardLearner() {
                 <h3 className="text-3xl font-bold mt-2">{lessonCount}</h3>
                 <p className="text-xs text-gray-500 mt-2">{uiStore.statsNotes.lessons}</p>
               </div>
-              <div className="bg-white rounded-xl p-6 shadow-lg hover-lift">
+              {/* <div className="bg-white rounded-xl p-6 shadow-lg hover-lift">
                 <p className="text-sm text-gray-500">Lessons Completed</p>
                 <h3 className="text-3xl font-bold mt-2">0</h3>
                 <p className="text-xs text-green-600 mt-2">Local progress (not synced)</p>
-              </div>
+              </div> */}
               <div className="bg-white rounded-xl p-6 shadow-lg hover-lift">
                 <p className="text-sm text-gray-500">Quiz Average</p>
                 <h3 className="text-3xl font-bold mt-2">{avg}%</h3>

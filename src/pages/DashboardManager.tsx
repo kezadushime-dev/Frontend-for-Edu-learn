@@ -1,32 +1,33 @@
-﻿import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { PrimaryNav, TopBar } from '../components/LayoutPieces';
-import { Sidebar } from '../components/Sidebars';
-import { uiStore } from '../data/uiStore';
-import { getQuizAnalytics, getLessons, getQuizzes, deleteLesson, deleteQuiz } from '../services/api';
+﻿import { useEffect, useMemo, useState } from 'react';//ifasha gukoresha state management na lifecycle hooks muri React
+import { Link } from 'react-router-dom';//ifasha gukora navigation hagati y'amapages atandukanye muri React application
+import { PrimaryNav, TopBar } from '../components/LayoutPieces';//ifasha gukoresha components za layout zateguwe mbere kugirango habeho consistency mu design
+import { Sidebar } from '../components/Sidebars';//ifasha gukoresha sidebar component yateguwe mbere kugirango habeho consistency mu design
+import { uiStore } from '../data/uiStore';//ifasha gukoresha global state management yateguwe mbere kugirango habeho centralized data handling
+import { getQuizAnalytics, getLessons, getQuizzes, deleteLesson, deleteQuiz } from '../services/api';//ifasha gukoresha functions zateguwe mbere zo gukora API calls kugirango habeho separation of concerns no gutuma code isukuye kandi reusable
 
 export default function DashboardManager() {
   const [lessonCount, setLessonCount] = useState(0);
   const [quizCount, setQuizCount] = useState(0);
   const [stats, setStats] = useState<{ learners?: number } | null>(null);
-  const [analytics, setAnalytics] = useState<any[]>([]);
-  const [error, setError] = useState('');
-  const [lessons, setLessons] = useState<any[]>([]);
-  const [quizzes, setQuizzes] = useState<any[]>([]);
+  const [analytics, setAnalytics] = useState<any[]>([]);// ifasha kubika amakuru ya analytics niba yastinze/yatsinzwe
+  const [error, setError] = useState('');// ifasha kureba error niba habayeho ikibazo mu gihe cyo kwinjiza data
+  const [lessons, setLessons] = useState<any[]>([]);// ifasha kubika amakuru ya lessons
+  const [quizzes, setQuizzes] = useState<any[]>([]);//ifasha kubika amakuru ya quizzes
 
   const loadData = async () => {
     try {
-      const [lessonsData, quizzesData, analyticsRes] = await Promise.all([
-        getLessons().catch(() => []),
+      const [lessonsData, quizzesData, analyticsRes] = await Promise.all([// promise.all ifasha kuraninga all three request at the same time for better performance
+        getLessons().catch(() => []),//catch {} ifasha gufata error niba request ya lessons itagenze neza, kandi ikagarura array y'ubusa kugirango application idahagarara
         getQuizzes().catch(() => []),
         getQuizAnalytics().catch(() => [])
       ]);
+      //ifasha gukora update state nyuma yo kubona data, kandi ifasha kureba niba data ari array mbere yo kuyishyira muri state
       setLessons(lessonsData);
       setQuizzes(quizzesData);
       setLessonCount(lessonsData.length);
       setQuizCount(quizzesData.length);
       setAnalytics(Array.isArray(analyticsRes) ? analyticsRes : []);
-      setStats({ learners: 0 });
+      setStats({ learners: 0 });//ifasha gukora statistics z'ibanze, muri iki gihe learners ni 0 kuko nta API yihariye ihari yo kubona umubare w'abanyeshuri, ariko iyi structure ifasha kongeramo izindi stats mu gihe kizaza
     } catch (err: any) {
       setError(err?.message || 'Failed to load manager dashboard data.');
     }
@@ -35,7 +36,10 @@ export default function DashboardManager() {
   useEffect(() => {
     loadData();
   }, []);
-
+//Functions handleDeleteLesson na handleDeleteQuiz zifasha guhanagura lesson cyangwa quiz, 
+// mbere yo gukora delete, hazabaho confirmation dialog kugirango umuyobozi yemeze ko ashaka gukora delete, 
+// nyuma yo kwemeza, hazageragezwa gukora delete, kandi niba byagenze neza, hazongera kwinjiza data kugirango dashboard ivugururwe, 
+// ariko niba habayeho ikibazo mu gihe cyo delete, hazabaho alert kugirango umuyobozi amenyeshwe ko delete itagenze neza.unction handleDeleteLesson(id: string) {
   const handleDeleteLesson = async (id: string) => {
     if (window.confirm('Delete this lesson?')) {
       try {
@@ -57,12 +61,18 @@ export default function DashboardManager() {
       }
     }
   };
-
+//Ifasha gukora statistics z'ibanze ku bijyanye na quiz, muri iki gihe irimo kubara pass rate na total attempts,
+// pass rate ibarwa hakurikijwe umubare w'abanyeshuri batsinze ugereranyije n'umubare wose w'abagerageje, 
+// total attempts ni umubare wose w'ibigeragezo byakozwe kuri quizzes, 
+// useMemo ifasha kubara iyi statistics gusa igihe analytics ihindutse, kugirango itababarira dashboard buri gihe habaho render.
   const quizStats = useMemo(() => {
     if (!analytics.length) return { passRate: 0, attempts: 0 };
+     // Sum up all attempts from the analytics array
     const totalAttempts = analytics.reduce((sum, item) => sum + (item.attempts || 0), 0);
     if (!totalAttempts) return { passRate: 0, attempts: 0 };
+       // Sum up all passed counts
     const totalPassed = analytics.reduce((sum, item) => sum + (item.passed || 0), 0);
+      // Calculate pass rate as a whole number percentage
     return { passRate: Math.round((totalPassed / totalAttempts) * 100), attempts: totalAttempts };
   }, [analytics]);
 
