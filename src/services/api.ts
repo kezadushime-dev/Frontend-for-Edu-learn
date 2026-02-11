@@ -45,7 +45,7 @@ export const createLesson = async (lessonData: any) => {
         }
       });
     } else if (lessonData.images instanceof FileList) {
-      Array.from(lessonData.images).forEach((file: File) => {
+      Array.from(lessonData.images as FileList).forEach((file) => {
         formData.append('images', file);
       });
     }
@@ -73,7 +73,7 @@ export const updateLesson = async (lessonId: string, lessonData: any) => {
         }
       });
     } else if (lessonData.images instanceof FileList) {
-      Array.from(lessonData.images).forEach((file: File) => {
+      Array.from(lessonData.images as FileList).forEach((file) => {
         formData.append('images', file);
       });
     }

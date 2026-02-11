@@ -167,11 +167,11 @@ export default function InstructorLessons() {
                         <td className="px-4 py-3">{lesson.title}</td>
                         <td className="px-4 py-3">{lesson.category}</td>
                         <td className="px-4 py-3">{lesson.createdBy || lesson.instructor?.name || 'N/A'}</td>
-                        <td className="px-4 py-3">{new Date(lesson.createdAt || lesson.updatedAt).toLocaleDateString()}</td>
+                        <td className="px-4 py-3">{new Date(lesson.createdAt || lesson.updatedAt || Date.now()).toLocaleDateString()}</td>
                         <td className="px-4 py-3">
                           <div className="flex gap-2">
                             <button onClick={() => handleEdit(lesson)} className="text-green-600 hover:underline">Edit</button>
-                            <button onClick={() => handleDelete(lesson._id || lesson.id)} className="text-red-600 hover:underline">Delete</button>
+                            <button onClick={() => handleDelete(lesson._id || lesson.id || '')} className="text-red-600 hover:underline">Delete</button>
                           </div>
                         </td>
                       </tr>
