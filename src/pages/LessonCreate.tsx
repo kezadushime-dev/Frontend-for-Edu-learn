@@ -135,11 +135,14 @@ export default function LessonCreate() {
               </div>
 
               <div className="flex flex-col gap-2">
-                <label className="text-sm font-semibold">Images (upload)</label>
+                <label htmlFor="images" className="text-sm font-semibold">Images (upload)</label>
                 <input
+                  id="images"
                   type="file"
                   multiple
                   onChange={(event) => setImages(event.target.files)}
+                  title="Upload images"
+                  aria-label="Upload images"
                   className="p-3 text-gray-800 rounded-md border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/40"
                 />
               </div>

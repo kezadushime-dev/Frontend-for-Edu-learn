@@ -1,5 +1,5 @@
 ﻿import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { PrimaryNav, TopBar } from '../components/LayoutPieces';
 import { Sidebar } from '../components/Sidebars';
 import { api } from '../utils/api';
@@ -10,11 +10,13 @@ type LessonProgress = Record<string, boolean>;
 const storageKey = 'edulearn_lessons_v2';
 
 export default function Lesson() {
+  const { id } = useParams<{ id?: string }>();
   const [lessons, setLessons] = useState<any[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [selectedLessonId, setSelectedLessonId] = useState<string>('');
   const [progress, setProgress] = useState<LessonProgress>(() => readJson(storageKey, {}));
   const [error, setError] = useState('');
+  const isSingleLessonView = !!id;
 
   useEffect(() => {
     writeJson(storageKey, progress);
@@ -28,7 +30,9 @@ export default function Lesson() {
         if (!mounted) return;
         const items = res.data.lessons || [];
         setLessons(items);
-        if (items.length && !selectedLessonId) {
+        if (id) {
+          setSelectedLessonId(id);
+        } else if (items.length && !selectedLessonId) {
           setSelectedLessonId(items[0]._id);
         }
       } catch (err: any) {
@@ -40,7 +44,7 @@ export default function Lesson() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [id]);
 
   const categories = useMemo(() => {
     const set = new Set<string>();

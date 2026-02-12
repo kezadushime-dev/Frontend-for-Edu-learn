@@ -20,6 +20,9 @@ import InstructorLessons from './pages/InstructorLessons';
 import InstructorLessonCreate from './pages/InstructorLessonCreate';
 import InstructorQuizzes from './pages/InstructorQuizzes';
 import InstructorQuizCreate from './pages/InstructorQuizCreate';
+import LessonEdit from './pages/LessonEdit';
+import QuizEdit from './pages/QuizEdit';
+import LessonView from './pages/LessonView';
 import { useLucide } from './utils/useLucide';
 
 
@@ -41,7 +44,10 @@ function App() {
       <Route path="dashboard-manager" element={<DashboardManager />} />
 
       <Route path="lesson" element={<Lesson />} />
+      <Route path="lesson/:id" element={<Lesson />} />
+      <Route path="lesson-view/:id" element={<LessonView />} />
       <Route path="quiz" element={<Quiz />} />
+      <Route path="quiz/:id" element={<Quiz />} />
 
       <Route path="admin-users" element={<AdminUsers />} />
       <Route path="admin-lessons" element={<AdminLessons />} />
@@ -50,6 +56,13 @@ function App() {
 
       <Route path="lesson-create" element={<LessonCreate />} />
       <Route path="quiz-create" element={<QuizCreate />} />
+
+      <Route path="instructor/lessons" element={<InstructorLessons />} />
+      <Route path="instructor/lesson-create" element={<InstructorLessonCreate />} />
+      <Route path="instructor/lesson-edit/:id" element={<LessonEdit />} />
+      <Route path="instructor/quizzes" element={<InstructorQuizzes />} />
+      <Route path="instructor/quiz-create" element={<InstructorQuizCreate />} />
+      <Route path="instructor/quiz-edit/:id" element={<QuizEdit />} />
       <Route path="instructor/lessons" element={<InstructorLessons />} />
       <Route path="instructor/lesson-create" element={<InstructorLessonCreate />} />
       <Route path="instructor/quizzes" element={<InstructorQuizzes />} />
