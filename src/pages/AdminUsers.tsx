@@ -4,6 +4,8 @@ import { Sidebar } from '../components/Sidebars';
 import { AdminTable } from '../components/AdminTable';
 import { api } from '../utils/api';
 
+
+
 const roleOptions = ['learner', 'instructor', 'admin'];
 
 export default function AdminUsers() {
@@ -87,7 +89,9 @@ export default function AdminUsers() {
   return (
     <div className="bg-[#f5f8ff] text-slate-800">
       <TopBar animated={false} />
+      
       <PrimaryNav
+     
         variant="admin"
         items={[
           { label: 'Dashboard', to: '/dashboard-admin' },
@@ -112,6 +116,7 @@ export default function AdminUsers() {
         />
 
         <div>
+    
           <div className="flex items-center justify-between mb-6">
             <div>
               <p className="text-primary uppercase font-semibold tracking-wider">/admin/users</p>

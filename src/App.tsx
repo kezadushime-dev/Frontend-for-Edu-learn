@@ -24,6 +24,7 @@ import LessonEdit from './pages/LessonEdit';
 import QuizEdit from './pages/QuizEdit';
 import LessonView from './pages/LessonView';
 import { useLucide } from './utils/useLucide';
+import ProfileHeader from './components/ProfileHeader';
 
 
 function App() {
@@ -67,7 +68,7 @@ function App() {
       <Route path="instructor/lesson-create" element={<InstructorLessonCreate />} />
       <Route path="instructor/quizzes" element={<InstructorQuizzes />} />
       <Route path="instructor/quiz-create" element={<InstructorQuizCreate />} />
- 
+        <Route path="profile" element={<ProfileHeader/>} />
       
 
       <Route path="*" element={<Navigate to="/home" replace />} />

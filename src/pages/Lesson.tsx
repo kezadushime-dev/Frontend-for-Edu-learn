@@ -1,6 +1,7 @@
 ﻿import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { PrimaryNav, TopBar } from '../components/LayoutPieces';
+
 import { Sidebar } from '../components/Sidebars';
 import { api } from '../utils/api';
 import { readJson, writeJson } from '../utils/storage';
@@ -98,6 +99,8 @@ export default function Lesson() {
           />
 
           <div className="animate-fadeInUp">
+           
+            
             <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-8">
               <div>
                 <p className="text-primary uppercase font-semibold tracking-wider">Lessons</p>
