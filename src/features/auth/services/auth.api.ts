@@ -1,4 +1,4 @@
-import { request } from '../../config/apiBase';
+import { request } from '../../../core/config/apiBase';
 import { setToken, setUser } from '../utils/auth.storage';
 
 export const authService = {

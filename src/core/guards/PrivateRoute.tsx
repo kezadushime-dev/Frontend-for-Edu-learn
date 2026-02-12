@@ -1,6 +1,6 @@
 import { Navigate } from 'react-router-dom';
 import type { ReactElement } from 'react';
-import { getToken } from '../auth/utils/auth.storage';
+import { getToken } from '../../features/auth/utils/auth.storage';
 
 type PrivateRouteProps = {
   children: ReactElement;

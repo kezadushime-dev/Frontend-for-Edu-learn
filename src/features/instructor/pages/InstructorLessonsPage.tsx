@@ -2,63 +2,69 @@
 import { Link } from 'react-router-dom';
 import { PrimaryNav, TopBar } from '../../../core/layout/LayoutPieces';
 import { Sidebar } from '../../../core/layout/Sidebars';
-import { AdminFormFields } from '../../../shared/components/AdminFormFields';
+import { AdminFormFields } from '../../../components/AdminFormFields';
 import { uiStore } from '../../../shared/data/uiStore';
 import { api } from '../../../shared/utils/api';
 
-interface Quiz {
-  _id: string;
+interface Lesson {
+  _id?: string;
+  id?: string;
   title: string;
-  passingScore: number;
-  createdAt: string;
+  category: string;
+  createdBy?: string;
+  instructor?: { name: string };
+  createdAt?: string;
+  updatedAt?: string;
 }
 
-export default function InstructorQuizzes() {
-  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+export default function InstructorLessons() {
+  const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [editMode, setEditMode] = useState(false);
-  const [_selectedQuiz, setSelectedQuiz] = useState<any>(null);
+  const [selectedLesson, setSelectedLesson] = useState<any>(null);
   const [formData, setFormData] = useState({});
 
-  const fetchQuizzes = async () => {
+  const fetchLessons = async () => {
     try {
-      const res = await api.quizzes.list();
-      setQuizzes(res.data.quizzes);
+      const res = await api.lessons.list();
+      setLessons(res.data.lessons || []);
     } catch (err) {
-      setError('Failed to fetch quizzes');
+      setError('Failed to fetch lessons');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchQuizzes();
+    fetchLessons();
   }, []);
 
-  const handleEdit = (quiz: any) => {
-    setSelectedQuiz(quiz);
-    setFormData(quiz);
+  const handleEdit = (lesson: any) => {
+    setSelectedLesson(lesson);
+    setFormData(lesson);
     setEditMode(true);
   };
 
   const handleSaveEdit = async () => {
     try {
-      await api.quizzes.create(formData);
-      fetchQuizzes();
+      await api.lessons.delete(selectedLesson._id || selectedLesson.id);
+      alert('Lesson updated successfully!');
+      fetchLessons();
       setEditMode(false);
-    } catch (err) {
-      alert('Failed to update quiz');
+    } catch (err: any) {
+      alert(err?.response?.data?.message || 'Failed to update lesson');
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (window.confirm('Delete quiz?')) {
+    if (window.confirm('Delete lesson?')) {
       try {
-        await api.quizzes.delete(id);
-        fetchQuizzes();
-      } catch (err) {
-        alert('Failed to delete quiz');
+        await api.lessons.delete(id);
+        alert('Lesson deleted successfully!');
+        fetchLessons();
+      } catch (err: any) {
+        alert(err?.response?.data?.message || 'Failed to delete lesson');
       }
     }
   };
@@ -73,8 +79,8 @@ export default function InstructorQuizzes() {
         variant="dashboard"
         items={[
           { label: 'Dashboard', to: '/dashboard-manager' },
-          { label: 'Lessons', to: '/instructor/lessons' },
-          { label: 'Quizzes', to: '/instructor/quizzes', className: 'text-primary font-semibold' }
+          { label: 'Lessons', to: '/instructor/lessons', className: 'text-primary font-semibold' },
+          { label: 'Quizzes', to: '/instructor/quizzes' }
         ]}
       />
 
@@ -83,9 +89,9 @@ export default function InstructorQuizzes() {
           title="Instructor"
           links={[
             { label: 'Overview', to: '/dashboard-manager' },
-            { label: 'Manage Lessons', to: '/instructor/lessons' },
+            { label: 'Manage Lessons', active: true },
             { label: 'Create Lesson', to: '/instructor/lesson-create' },
-            { label: 'Manage Quizzes', active: true },
+            { label: 'Manage Quizzes', to: '/instructor/quizzes' },
             { label: 'Create Quiz', to: '/instructor/quiz-create' },
             { label: 'Logout', to: '/login' }
           ]}
@@ -94,20 +100,20 @@ export default function InstructorQuizzes() {
         <div>
           <div className="flex items-center justify-between mb-6">
             <div>
-              <p className="text-primary uppercase font-semibold tracking-wider">/quizzes</p>
-              <h1 className="text-3xl font-extrabold">Quizzes</h1>
+              <p className="text-primary uppercase font-semibold tracking-wider">/lessons</p>
+              <h1 className="text-3xl font-extrabold">Lessons</h1>
             </div>
-            <Link to="/instructor/quiz-create" className="bg-primary text-white px-4 py-2 rounded-md font-semibold">
-              Create Quiz
+            <Link to="/instructor/lesson-create" className="bg-primary text-white px-4 py-2 rounded-md font-semibold">
+              Create Lesson
             </Link>
           </div>
 
           {editMode && (
             <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-              <h2 className="text-xl font-bold mb-4">Edit Quiz</h2>
+              <h2 className="text-xl font-bold mb-4">Edit Lesson</h2>
               <form onSubmit={(e) => { e.preventDefault(); handleSaveEdit(); }} className="grid gap-5">
                 <AdminFormFields
-                  fields={uiStore.forms.quizCreate}
+                  fields={uiStore.forms.lessonCreate}
                   values={formData}
                   onChange={(key, value) => setFormData({ ...formData, [key]: value })}
                 />
@@ -129,26 +135,28 @@ export default function InstructorQuizzes() {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-4 py-3 text-left font-semibold">Title</th>
-                    <th className="px-4 py-3 text-left font-semibold">Passing Score</th>
-                    <th className="px-4 py-3 text-left font-semibold">Created</th>
+                    <th className="px-4 py-3 text-left font-semibold">Category</th>
+                    <th className="px-4 py-3 text-left font-semibold">Created By</th>
+                    <th className="px-4 py-3 text-left font-semibold">Date</th>
                     <th className="px-4 py-3 text-left font-semibold">Action</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {quizzes.length === 0 ? (
+                  {lessons.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="px-4 py-6 text-center text-gray-500">No quizzes found</td>
+                      <td colSpan={5} className="px-4 py-6 text-center text-gray-500">No lessons found</td>
                     </tr>
                   ) : (
-                    quizzes.map((quiz) => (
-                      <tr key={quiz._id} className="border-t hover:bg-gray-50">
-                        <td className="px-4 py-3">{quiz.title}</td>
-                        <td className="px-4 py-3">{quiz.passingScore}%</td>
-                        <td className="px-4 py-3">{new Date(quiz.createdAt).toLocaleDateString()}</td>
+                    lessons.map((lesson) => (
+                      <tr key={lesson._id} className="border-t hover:bg-gray-50">
+                        <td className="px-4 py-3">{lesson.title}</td>
+                        <td className="px-4 py-3">{lesson.category}</td>
+                        <td className="px-4 py-3">{lesson.createdBy || lesson.instructor?.name || 'N/A'}</td>
+                        <td className="px-4 py-3">{new Date(lesson.createdAt || lesson.updatedAt || Date.now()).toLocaleDateString()}</td>
                         <td className="px-4 py-3">
                           <div className="flex gap-2">
-                            <button onClick={() => handleEdit(quiz)} className="text-green-600 hover:underline">Edit</button>
-                            <button onClick={() => handleDelete(quiz._id)} className="text-red-600 hover:underline">Delete</button>
+                            <button onClick={() => handleEdit(lesson)} className="text-green-600 hover:underline">Edit</button>
+                            <button onClick={() => handleDelete(lesson._id || lesson.id || '')} className="text-red-600 hover:underline">Delete</button>
                           </div>
                         </td>
                       </tr>

@@ -1,4 +1,4 @@
-import { getToken } from '../auth/utils/auth.storage';
+import { getToken } from '../../features/auth/utils/auth.storage';
 
 const baseUrl =
   (import.meta as ImportMeta & { env?: Record<string, string> }).env?.VITE_API_BASE_URL ||

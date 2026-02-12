@@ -2,7 +2,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { PrimaryNav, TopBar } from '../../../core/layout/LayoutPieces';
 import { Sidebar } from '../../../core/layout/Sidebars';
-import { AdminFormFields } from '../../../shared/components/AdminFormFields';
+import { AdminFormFields } from '../../../components/AdminFormFields';
 import { uiStore } from '../../../shared/data/uiStore';
 import { api } from '../../../shared/utils/api';
 
