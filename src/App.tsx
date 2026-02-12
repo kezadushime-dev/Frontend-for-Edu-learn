@@ -6,7 +6,6 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import DashboardAdmin from './pages/DashboardAdmin';
 import DashboardLearner from './pages/DashboardLearner';
-// import DashboardLearnerIntegrated from './pages/DashboardInstructor';
 import DashboardInstructor from './pages/DashboardInstructor';
 import DashboardManager from './pages/DashboardManager';
 import Lesson from './pages/Lesson';
@@ -64,6 +63,12 @@ function App() {
       <Route path="instructor/quizzes" element={<InstructorQuizzes />} />
       <Route path="instructor/quiz-create" element={<InstructorQuizCreate />} />
       <Route path="instructor/quiz-edit/:id" element={<QuizEdit />} />
+      <Route path="instructor/lessons" element={<InstructorLessons />} />
+      <Route path="instructor/lesson-create" element={<InstructorLessonCreate />} />
+      <Route path="instructor/quizzes" element={<InstructorQuizzes />} />
+      <Route path="instructor/quiz-create" element={<InstructorQuizCreate />} />
+ 
+      
 
       <Route path="*" element={<Navigate to="/home" replace />} />
     </Routes>
