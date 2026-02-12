@@ -8,12 +8,14 @@ import { learnerLessonService } from '../../features/learner/services/learnerLes
 import { learnerQuizService } from '../../features/learner/services/learnerQuiz.api';
 import { lessonService } from '../services/lesson.api';
 import { quizService } from '../services/quiz.api';
+import { reportService } from '../services/report.api';
 import { ApiError } from '../services/apiBase';
 
 export const api = {
   auth: authService,
   lessons: lessonService,
   quizzes: quizService,
+  reports: reportService,
   admin: {
     ...adminService,
     lessons: adminLessonService,

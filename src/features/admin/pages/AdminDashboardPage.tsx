@@ -133,7 +133,8 @@ export default function DashboardAdmin() {
         items={[
           { label: 'Home', to: '/' },
           { label: 'Lessons', to: '/lesson' },
-          { label: 'Quiz', to: '/quiz' }
+          { label: 'Quiz', to: '/quiz' },
+          { label: 'Report Requests', to: '/admin/report-requests' }
         ]}
       />
 
@@ -147,6 +148,7 @@ export default function DashboardAdmin() {
               { label: 'Manage Lessons', to: '/admin-lessons' },
               { label: 'Manage Quizzes', to: '/admin-quizzes' },
               { label: 'Quiz Attempts', to: '/admin-quiz-attempts' },
+              { label: 'Report Requests', to: '/admin/report-requests' },
               { label: 'Logout', to: '/login' }
             ]}
           />

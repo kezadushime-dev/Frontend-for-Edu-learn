@@ -126,7 +126,13 @@ export default function ManagerDashboardPage() {
   return (
     <div className="bg-[#f5f8ff] text-slate-800">
       <TopBar />
-      <PrimaryNav variant="dashboard" items={[{ label: 'Home', to: '/' }]} />
+      <PrimaryNav
+        variant="dashboard"
+        items={[
+          { label: 'Home', to: '/' },
+          { label: 'Report Requests', to: '/instructor/report-requests' }
+        ]}
+      />
 
       <section className="pt-32 pb-20">
         <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-[260px_1fr] gap-8">
@@ -138,6 +144,7 @@ export default function ManagerDashboardPage() {
               { label: 'Create Lesson', to: '/instructor/lesson-create' },
               { label: 'Manage Quizzes', to: '/instructor/quizzes' },
               { label: 'Create Quiz', to: '/instructor/quiz-create' },
+              { label: 'Report Requests', to: '/instructor/report-requests' },
               { label: 'Logout', to: '/login' }
             ]}
           />

@@ -80,7 +80,8 @@ export default function InstructorLessons() {
         items={[
           { label: 'Dashboard', to: '/dashboard-manager' },
           { label: 'Lessons', to: '/instructor/lessons', className: 'text-primary font-semibold' },
-          { label: 'Quizzes', to: '/instructor/quizzes' }
+          { label: 'Quizzes', to: '/instructor/quizzes' },
+          { label: 'Report Requests', to: '/instructor/report-requests' }
         ]}
       />
 
@@ -89,13 +90,14 @@ export default function InstructorLessons() {
           title="Instructor"
           links={[
             { label: 'Overview', to: '/dashboard-manager' },
-            { label: 'Manage Lessons', active: true },
-            { label: 'Create Lesson', to: '/instructor/lesson-create' },
-            { label: 'Manage Quizzes', to: '/instructor/quizzes' },
-            { label: 'Create Quiz', to: '/instructor/quiz-create' },
-            { label: 'Logout', to: '/login' }
-          ]}
-        />
+              { label: 'Manage Lessons', active: true },
+              { label: 'Create Lesson', to: '/instructor/lesson-create' },
+              { label: 'Manage Quizzes', to: '/instructor/quizzes' },
+              { label: 'Create Quiz', to: '/instructor/quiz-create' },
+              { label: 'Report Requests', to: '/instructor/report-requests' },
+              { label: 'Logout', to: '/login' }
+            ]}
+          />
 
         <div>
           <div className="flex items-center justify-between mb-6">

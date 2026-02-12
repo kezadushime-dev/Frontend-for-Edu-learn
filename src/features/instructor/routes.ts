@@ -8,6 +8,7 @@ import LessonEditPage from './pages/LessonEditPage';
 import LessonViewPage from './pages/LessonViewPage';
 import ManagerDashboardPage from './pages/ManagerDashboardPage';
 import QuizEditPage from './pages/QuizEditPage';
+import InstructorReportRequestsPage from './pages/InstructorReportRequestsPage';
 
 export const instructorRoutes: AppRoute[] = [
   ...withPaths(ManagerDashboardPage, '/dashboard-manager'),
@@ -18,5 +19,6 @@ export const instructorRoutes: AppRoute[] = [
   ...withPaths(LessonEditPage, '/instructor/lesson-edit/:id', '/lesson-edit/:id'),
   ...withPaths(InstructorQuizzesPage, '/instructor/quizzes'),
   ...withPaths(InstructorQuizCreatePage, '/instructor/quiz-create'),
-  ...withPaths(QuizEditPage, '/instructor/quiz-edit/:id', '/quiz-edit/:id')
+  ...withPaths(QuizEditPage, '/instructor/quiz-edit/:id', '/quiz-edit/:id'),
+  ...withPaths(InstructorReportRequestsPage, '/instructor/report-requests')
 ];

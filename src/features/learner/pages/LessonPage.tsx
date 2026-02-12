@@ -80,7 +80,8 @@ export default function Lesson() {
         items={[
           { label: 'Home', to: '/' },
           { label: 'Lessons', to: '/lesson' },
-          { label: 'Quiz', to: '/quiz' }
+          { label: 'Quiz', to: '/quiz' },
+          { label: 'Report Card', to: '/learner/report-card' }
         ]}
       />
 
@@ -92,6 +93,7 @@ export default function Lesson() {
               { label: 'Overview', to: '/dashboard-learner' },
               { label: 'My Lessons', active: true },
               { label: 'My Quizzes', to: '/quiz' },
+              { label: 'Report Card', to: '/learner/report-card' },
               { label: 'Logout', to: '/login' }
             ]}
           />

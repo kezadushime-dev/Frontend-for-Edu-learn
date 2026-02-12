@@ -102,7 +102,8 @@ export default function Quiz() {
         items={[
           { label: 'Home', to: '/' },
           { label: 'Lessons', to: '/lesson' },
-          { label: 'Quiz', to: '/quiz' }
+          { label: 'Quiz', to: '/quiz' },
+          { label: 'Report Card', to: '/learner/report-card' }
         ]}
       />
 
@@ -114,6 +115,7 @@ export default function Quiz() {
               { label: 'Overview', to: '/dashboard-learner' },
               { label: 'My Lessons', to: '/lesson' },
               { label: 'My Quizzes', active: true },
+              { label: 'Report Card', to: '/learner/report-card' },
               { label: 'Logout', to: '/login' }
             ]}
           />

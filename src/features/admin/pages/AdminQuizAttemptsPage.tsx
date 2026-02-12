@@ -69,7 +69,8 @@ export default function AdminQuizAttempts() {
           { label: 'Users', to: '/admin-users' },
           { label: 'Lessons', to: '/admin-lessons' },
           { label: 'Quizzes', to: '/admin-quizzes' },
-          { label: 'Attempts', to: '/admin-quiz-attempts', className: 'text-primary font-semibold' }
+          { label: 'Attempts', to: '/admin-quiz-attempts', className: 'text-primary font-semibold' },
+          { label: 'Reports', to: '/admin/report-requests' }
         ]}
       />
 
@@ -82,6 +83,7 @@ export default function AdminQuizAttempts() {
             { label: 'Manage Lessons', to: '/admin-lessons' },
             { label: 'Manage Quizzes', to: '/admin-quizzes' },
             { label: 'Quiz Attempts', active: true },
+            { label: 'Report Requests', to: '/admin/report-requests' },
             { label: 'Logout', to: '/login' }
           ]}
         />
