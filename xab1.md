@@ -1,4 +1,4 @@
-**route-by-route spec**  **what data each route displays/returns**, and **who can access it** (permissions). 
+**route-by-route spec**  **what data each route displays/returns**, and **who can access it** (permissions)
 
 ---
 
