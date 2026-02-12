@@ -197,7 +197,7 @@ export default function DashboardManager() {
                           <td className="px-4 py-3">
                             <div className="flex gap-2">
                               <Link to={`/lesson/${lesson._id}`} className="text-blue-600 hover:underline">View</Link>
-                              <Link to={`/instructor/lessons`} className="text-green-600 hover:underline">Edit</Link>
+                              <Link to={`/instructor/lesson-edit/${lesson._id}`} className="text-green-600 hover:underline">Edit</Link>
                               <button onClick={() => handleDeleteLesson(lesson._id)} className="text-red-600 hover:underline">Delete</button>
                             </div>
                           </td>
@@ -240,7 +240,7 @@ export default function DashboardManager() {
                           <td className="px-4 py-3">
                             <div className="flex gap-2">
                               <Link to={`/quiz/${quiz._id}`} className="text-blue-600 hover:underline">View</Link>
-                              <Link to={`/instructor/quizzes`} className="text-green-600 hover:underline">Edit</Link>
+                              <Link to={`/instructor/quiz-edit/${quiz._id}`} className="text-green-600 hover:underline">Edit</Link>
                               <button onClick={() => handleDeleteQuiz(quiz._id)} className="text-red-600 hover:underline">Delete</button>
                             </div>
                           </td>

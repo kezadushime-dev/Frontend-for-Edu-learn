@@ -1,5 +1,5 @@
-﻿import { type FormEvent, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { type FormEvent, useEffect, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { PrimaryNav, TopBar } from '../components/LayoutPieces';
 import { Sidebar } from '../components/Sidebars';
 import { api } from '../utils/api';
@@ -11,17 +11,43 @@ type QuestionForm = {
   points: string;
 };
 
-export default function QuizCreate() {
+export default function QuizEdit() {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [quiz, setQuiz] = useState<any>(null);
   const [lessonId, setLessonId] = useState('');
   const [title, setTitle] = useState('');
   const [passingScore, setPassingScore] = useState('70');
   const [isActive, setIsActive] = useState('true');
-  const [questions, setQuestions] = useState<QuestionForm[]>([
-    { questionText: '', options: '', correctOptionIndex: '0', points: '1' }
-  ]);
+  const [questions, setQuestions] = useState<QuestionForm[]>([]);
   const [message, setMessage] = useState<{ text: string; type: 'error' | 'success' } | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const loadQuiz = async () => {
+      try {
+        const res = await api.quizzes.get(id!);
+        const quizData = res.data.quiz;
+        setQuiz(quizData);
+        setLessonId(quizData.lesson?._id || '');
+        setTitle(quizData.title);
+        setPassingScore(quizData.passingScore.toString());
+        setIsActive(quizData.isActive.toString());
+        setQuestions(quizData.questions.map((q: any) => ({
+          questionText: q.questionText,
+          options: q.options.join(','),
+          correctOptionIndex: q.correctOptionIndex.toString(),
+          points: q.points.toString()
+        })));
+      } catch (err: any) {
+        setMessage({ text: err?.message || 'Failed to load quiz.', type: 'error' });
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadQuiz();
+  }, [id]);
 
   const updateQuestion = (index: number, key: keyof QuestionForm, value: string) => {
     setQuestions((prev) => prev.map((q, i) => (i === index ? { ...q, [key]: value } : q)));
@@ -37,7 +63,7 @@ export default function QuizCreate() {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setLoading(true);
+    setSaving(true);
     setMessage(null);
     try {
       const payload = {
@@ -52,46 +78,51 @@ export default function QuizCreate() {
           points: Number(q.points)
         }))
       };
-      await api.quizzes.create(payload);
-      setMessage({ text: 'Quiz created successfully.', type: 'success' });
-      window.setTimeout(() => navigate('/admin/quizzes'), 600);
+      await api.quizzes.create(payload); // Assuming update uses same endpoint, or add update method
+      setMessage({ text: 'Quiz updated successfully.', type: 'success' });
+      window.setTimeout(() => navigate('/instructor/quizzes'), 600);
     } catch (err: any) {
-      setMessage({ text: err?.message || 'Failed to create quiz.', type: 'error' });
+      setMessage({ text: err?.message || 'Failed to update quiz.', type: 'error' });
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
+
+  if (loading) return <div>Loading...</div>;
 
   return (
     <div className="bg-[#f5f8ff] text-slate-800">
       <TopBar animated={false} />
       <PrimaryNav
-        variant="admin"
+        variant="dashboard"
         items={[
-          { label: 'Dashboard', to: '/dashboard-admin' },
-          { label: 'Quizzes', to: '/admin/quizzes' },
-          { label: 'Create Quiz', to: '/quiz-create', className: 'text-primary font-semibold' }
+          { label: 'Dashboard', to: '/dashboard-manager' },
+          { label: 'Lessons', to: '/instructor/lessons' },
+          { label: 'Quizzes', to: '/instructor/quizzes', className: 'text-primary font-semibold' }
         ]}
       />
 
       <section className="max-w-7xl mx-auto px-6 pt-32 pb-10 grid lg:grid-cols-[260px_1fr] gap-8">
         <Sidebar
-          title="Admin"
+          title="Instructor"
           links={[
-            { label: 'Overview', to: '/dashboard-admin' },
-            { label: 'Manage Users', to: '/admin/users' },
-            { label: 'Manage Lessons', to: '/admin/lessons' },
-            { label: 'Manage Quizzes', to: '/admin/quizzes' },
-            { label: 'Quiz Attempts', to: '/admin/quiz-attempts' },
+            { label: 'Overview', to: '/dashboard-manager' },
+            { label: 'Manage Lessons', to: '/instructor/lessons' },
+            { label: 'Create Lesson', to: '/instructor/lesson-create' },
+            { label: 'Manage Quizzes', active: true },
+            { label: 'Create Quiz', to: '/instructor/quiz-create' },
             { label: 'Logout', to: '/login' }
           ]}
         />
 
         <div>
           <div className="mb-6">
-            <p className="text-primary uppercase font-semibold tracking-wider">POST /quizzes</p>
-            <h1 className="text-3xl font-extrabold">Create Quiz</h1>
-            <p className="text-gray-600 mt-2">Fields match the Quiz model.</p>
+            <p className="text-primary uppercase font-semibold tracking-wider">PATCH /quizzes/{id}</p>
+            <h1 className="text-3xl font-extrabold">Edit Quiz</h1>
+            <p className="text-gray-600 mt-2">Update quiz details and questions.</p>
+            {quiz?.lesson && (
+              <p className="text-sm text-gray-500 mt-2">Lesson: {quiz.lesson.title}</p>
+            )}
           </div>
 
           <form className="bg-white rounded-xl shadow-lg p-6 grid gap-5" onSubmit={handleSubmit}>
@@ -218,10 +249,10 @@ export default function QuizCreate() {
             ) : null}
 
             <div className="flex gap-3">
-              <button type="submit" className="bg-primary text-white px-5 py-2 rounded-md font-semibold disabled:opacity-60" disabled={loading}>
-                {loading ? 'Saving...' : 'Save Quiz'}
+              <button type="submit" className="bg-primary text-white px-5 py-2 rounded-md font-semibold disabled:opacity-60" disabled={saving}>
+                {saving ? 'Saving...' : 'Save Changes'}
               </button>
-              <Link to="/admin/quizzes" className="border-2 border-primary text-primary px-5 py-2 rounded-md font-semibold">
+              <Link to="/instructor/quizzes" className="border-2 border-primary text-primary px-5 py-2 rounded-md font-semibold">
                 Cancel
               </Link>
             </div>

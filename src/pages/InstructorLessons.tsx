@@ -28,7 +28,7 @@ export default function InstructorLessons() {
   const fetchLessons = async () => {
     try {
       const res = await api.lessons.list();
-      setLessons(res.data.lessons);
+      setLessons(res.data.lessons || []);
     } catch (err) {
       setError('Failed to fetch lessons');
     } finally {
