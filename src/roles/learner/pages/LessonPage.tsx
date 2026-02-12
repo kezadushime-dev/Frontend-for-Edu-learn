@@ -97,6 +97,8 @@ export default function Lesson() {
           />
 
           <div className="animate-fadeInUp">
+           
+            
             <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-8">
               <div>
                 <p className="text-primary uppercase font-semibold tracking-wider">Lessons</p>
