@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { getToken, getUser, type AuthUser } from '../core/auth/utils/auth.storage';
+import { getToken, getUser, type AuthUser } from '../features/auth/utils/auth.storage';
 import { api } from '../shared/utils/api';
 
 
