@@ -1,7 +1,7 @@
 ﻿import { useEffect, useState } from 'react';
 import { PrimaryNav, TopBar } from '../../../core/layout/LayoutPieces';
 import { Sidebar } from '../../../core/layout/Sidebars';
-import { AdminTable } from '../../../shared/components/AdminTable';
+import { AdminTable } from '../../../components/AdminTable';
 import { api } from '../../../shared/utils/api';
 
 const analyticsColumns = [

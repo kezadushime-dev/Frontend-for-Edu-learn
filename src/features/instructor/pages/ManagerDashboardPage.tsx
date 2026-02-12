@@ -1,82 +1,126 @@
-﻿import { useEffect, useMemo, useState } from 'react';//ifasha gukoresha state management na lifecycle hooks muri React
-import { Link } from 'react-router-dom';//ifasha gukora navigation hagati y'amapages atandukanye muri React application
-import { PrimaryNav, TopBar } from '../../../core/layout/LayoutPieces';//ifasha gukoresha components za layout zateguwe mbere kugirango habeho consistency mu design
-import { Sidebar } from '../../../core/layout/Sidebars';//ifasha gukoresha sidebar component yateguwe mbere kugirango habeho consistency mu design
-import { uiStore } from '../../../shared/data/uiStore';//ifasha gukoresha global state management yateguwe mbere kugirango habeho centralized data handling
+﻿import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { PrimaryNav, TopBar } from '../../../core/layout/LayoutPieces';
+import { Sidebar } from '../../../core/layout/Sidebars';
+import { uiStore } from '../../../shared/data/uiStore';
 import { api } from '../../../shared/utils/api';
 
-export default function DashboardManager() {
-  const [lessonCount, setLessonCount] = useState(0);
-  const [quizCount, setQuizCount] = useState(0);
-  const [stats, setStats] = useState<{ learners?: number } | null>(null);
-  const [analytics, setAnalytics] = useState<any[]>([]);// ifasha kubika amakuru ya analytics niba yastinze/yatsinzwe
-  const [error, setError] = useState('');// ifasha kureba error niba habayeho ikibazo mu gihe cyo kwinjiza data
-  const [lessons, setLessons] = useState<any[]>([]);// ifasha kubika amakuru ya lessons
-  const [quizzes, setQuizzes] = useState<any[]>([]);//ifasha kubika amakuru ya quizzes
+type LessonItem = {
+  _id?: string;
+  id?: string;
+  title?: string;
+  category?: string;
+  createdBy?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  instructor?: { name?: string };
+};
 
-  const loadData = async () => {
-    try {
-      const [lessonsData, quizzesData, analyticsRes] = await Promise.all([
-        api.lessons.list().then(r => r.data.lessons).catch(() => []),
-        api.quizzes.list().then(r => r.data.quizzes).catch(() => []),
-        api.quizzes.analytics().then(r => r.data.analytics).catch(() => [])
-      ]);
-      //ifasha gukora update state nyuma yo kubona data, kandi ifasha kureba niba data ari array mbere yo kuyishyira muri state
-      setLessons(lessonsData);
-      setQuizzes(quizzesData);
-      setLessonCount(lessonsData.length);
-      setQuizCount(quizzesData.length);
-      setAnalytics(Array.isArray(analyticsRes) ? analyticsRes : []);
-      setStats({ learners: 0 });//ifasha gukora statistics z'ibanze, muri iki gihe learners ni 0 kuko nta API yihariye ihari yo kubona umubare w'abanyeshuri, ariko iyi structure ifasha kongeramo izindi stats mu gihe kizaza
-    } catch (err: any) {
-      setError(err?.message || 'Failed to load manager dashboard data.');
-    }
-  };
+type QuizItem = {
+  _id?: string;
+  id?: string;
+  title?: string;
+  passingScore?: number;
+  createdAt?: string;
+};
+
+type AnalyticsItem = {
+  attempts?: number;
+  passed?: number;
+};
+
+const formatDate = (value?: string) => {
+  if (!value) return 'N/A';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? 'N/A' : date.toLocaleDateString();
+};
+
+export default function ManagerDashboardPage() {
+  const [analytics, setAnalytics] = useState<AnalyticsItem[]>([]);
+  const [error, setError] = useState('');
+  const [lessons, setLessons] = useState<LessonItem[]>([]);
+  const [quizzes, setQuizzes] = useState<QuizItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadData();
-  }, []);
-//Functions handleDeleteLesson na handleDeleteQuiz zifasha guhanagura lesson cyangwa quiz, 
-// mbere yo gukora delete, hazabaho confirmation dialog kugirango umuyobozi yemeze ko ashaka gukora delete, 
-// nyuma yo kwemeza, hazageragezwa gukora delete, kandi niba byagenze neza, hazongera kwinjiza data kugirango dashboard ivugururwe, 
-// ariko niba habayeho ikibazo mu gihe cyo delete, hazabaho alert kugirango umuyobozi amenyeshwe ko delete itagenze neza.unction handleDeleteLesson(id: string) {
-  const handleDeleteLesson = async (id: string) => {
-    if (window.confirm('Delete this lesson?')) {
+    let mounted = true;
+
+    const loadData = async () => {
       try {
-        await api.lessons.delete(id);
-        loadData();
-      } catch (err) {
-        alert('Failed to delete lesson');
+        setLoading(true);
+        setError('');
+
+        const [lessonsRes, quizzesRes, analyticsRes] = await Promise.all([
+          api.lessons.list(),
+          api.quizzes.list(),
+          api.quizzes.analytics().catch(() => ({ data: { analytics: [] } }))
+        ]);
+
+        if (!mounted) return;
+        setLessons((lessonsRes.data.lessons || []) as LessonItem[]);
+        setQuizzes((quizzesRes.data.quizzes || []) as QuizItem[]);
+        setAnalytics((analyticsRes.data.analytics || []) as AnalyticsItem[]);
+      } catch (err: unknown) {
+        if (!mounted) return;
+        setError(err instanceof Error ? err.message : 'Failed to load manager dashboard data.');
+      } finally {
+        if (mounted) setLoading(false);
       }
+    };
+
+    void loadData();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const refreshData = async () => {
+    const [lessonsRes, quizzesRes, analyticsRes] = await Promise.all([
+      api.lessons.list(),
+      api.quizzes.list(),
+      api.quizzes.analytics().catch(() => ({ data: { analytics: [] } }))
+    ]);
+
+    setLessons((lessonsRes.data.lessons || []) as LessonItem[]);
+    setQuizzes((quizzesRes.data.quizzes || []) as QuizItem[]);
+    setAnalytics((analyticsRes.data.analytics || []) as AnalyticsItem[]);
+  };
+
+  const handleDeleteLesson = async (id: string) => {
+    if (!window.confirm('Delete this lesson?')) return;
+
+    try {
+      await api.lessons.delete(id);
+      await refreshData();
+    } catch {
+      alert('Failed to delete lesson');
     }
   };
 
   const handleDeleteQuiz = async (id: string) => {
-    if (window.confirm('Delete this quiz?')) {
-      try {
-        await api.quizzes.delete(id);
-        loadData();
-      } catch (err) {
-        alert('Failed to delete quiz');
-      }
+    if (!window.confirm('Delete this quiz?')) return;
+
+    try {
+      await api.quizzes.delete(id);
+      await refreshData();
+    } catch {
+      alert('Failed to delete quiz');
     }
   };
-//Ifasha gukora statistics z'ibanze ku bijyanye na quiz, muri iki gihe irimo kubara pass rate na total attempts,
-// pass rate ibarwa hakurikijwe umubare w'abanyeshuri batsinze ugereranyije n'umubare wose w'abagerageje, 
-// total attempts ni umubare wose w'ibigeragezo byakozwe kuri quizzes, 
-// useMemo ifasha kubara iyi statistics gusa igihe analytics ihindutse, kugirango itababarira dashboard buri gihe habaho render.
+
   const quizStats = useMemo(() => {
     if (!analytics.length) return { passRate: 0, attempts: 0 };
-     // Sum up all attempts from the analytics array
+
     const totalAttempts = analytics.reduce((sum, item) => sum + (item.attempts || 0), 0);
     if (!totalAttempts) return { passRate: 0, attempts: 0 };
-       // Sum up all passed counts
+
     const totalPassed = analytics.reduce((sum, item) => sum + (item.passed || 0), 0);
-      // Calculate pass rate as a whole number percentage
     return { passRate: Math.round((totalPassed / totalAttempts) * 100), attempts: totalAttempts };
   }, [analytics]);
 
-  const learnerCount = stats?.learners || 0;
+  const lessonCount = lessons.length;
+  const quizCount = quizzes.length;
+  const learnerCount = 0;
   const activeCohorts = Math.max(1, Math.ceil(learnerCount / 5));
 
   return (
@@ -86,14 +130,17 @@ export default function DashboardManager() {
 
       <section className="pt-32 pb-20">
         <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-[260px_1fr] gap-8">
-          <Sidebar title="Manager" links={[
-            { label: 'Overview', active: true },
-            { label: 'Manage Lessons', to: '/instructor/lessons' },
-            { label: 'Create Lesson', to: '/instructor/lesson-create' },
-            { label: 'Manage Quizzes', to: '/instructor/quizzes' },
-            { label: 'Create Quiz', to: '/instructor/quiz-create' },
-            { label: 'Logout', to: '/login' }
-          ]} />
+          <Sidebar
+            title="Manager"
+            links={[
+              { label: 'Overview', active: true },
+              { label: 'Manage Lessons', to: '/instructor/lessons' },
+              { label: 'Create Lesson', to: '/instructor/lesson-create' },
+              { label: 'Manage Quizzes', to: '/instructor/quizzes' },
+              { label: 'Create Quiz', to: '/instructor/quiz-create' },
+              { label: 'Logout', to: '/login' }
+            ]}
+          />
 
           <div className="animate-fadeInUp">
             <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-8">
@@ -105,6 +152,7 @@ export default function DashboardManager() {
             </div>
 
             {error ? <p className="text-red-600 text-sm mb-6">{error}</p> : null}
+            {loading ? <p className="text-gray-500 text-sm mb-6">Loading dashboard...</p> : null}
 
             <div className="grid md:grid-cols-4 gap-6">
               <div className="bg-white rounded-xl p-6 shadow-lg hover-lift">
@@ -166,7 +214,7 @@ export default function DashboardManager() {
 
             <div className="bg-white rounded-xl p-6 shadow-lg mt-8">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-bold">ðŸ“˜ Lessons</h3>
+                <h3 className="text-xl font-bold">Lessons</h3>
                 <Link to="/instructor/lesson-create" className="bg-primary text-white px-4 py-2 rounded-md text-sm font-semibold">
                   Create Lesson
                 </Link>
@@ -188,21 +236,24 @@ export default function DashboardManager() {
                         <td colSpan={5} className="px-4 py-6 text-center text-gray-500">No lessons found</td>
                       </tr>
                     ) : (
-                      lessons.map((lesson) => (
-                        <tr key={lesson._id} className="shadow-sm hover:shadow-md">
-                          <td className="px-4 py-3">{lesson.title}</td>
-                          <td className="px-4 py-3">{lesson.category}</td>
-                          <td className="px-4 py-3">{lesson.createdBy || lesson.instructor?.name || 'N/A'}</td>
-                          <td className="px-4 py-3">{new Date(lesson.createdAt || lesson.updatedAt).toLocaleDateString()}</td>
-                          <td className="px-4 py-3">
-                            <div className="flex gap-2">
-                              <Link to={`/lesson/${lesson._id}`} className="text-blue-600 hover:underline">View</Link>
-                              <Link to={`/instructor/lesson-edit/${lesson._id}`} onClick={() => console.log('Editing lesson:', lesson)} className="text-green-600 hover:underline">Edit</Link>
-                              <button onClick={() => handleDeleteLesson(lesson._id)} className="text-red-600 hover:underline">Delete</button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))
+                      lessons.map((lesson, index) => {
+                        const lessonId = lesson._id || lesson.id || '';
+                        return (
+                          <tr key={lessonId || String(index)} className="shadow-sm hover:shadow-md">
+                            <td className="px-4 py-3">{lesson.title || 'N/A'}</td>
+                            <td className="px-4 py-3">{lesson.category || 'N/A'}</td>
+                            <td className="px-4 py-3">{lesson.createdBy || lesson.instructor?.name || 'N/A'}</td>
+                            <td className="px-4 py-3">{formatDate(lesson.createdAt || lesson.updatedAt)}</td>
+                            <td className="px-4 py-3">
+                              <div className="flex gap-2">
+                                <Link to={`/lesson/${lessonId}`} className="text-blue-600 hover:underline">View</Link>
+                                <Link to={`/instructor/lesson-edit/${lessonId}`} className="text-green-600 hover:underline">Edit</Link>
+                                <button onClick={() => handleDeleteLesson(String(lessonId))} className="text-red-600 hover:underline">Delete</button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
                     )}
                   </tbody>
                 </table>
@@ -211,7 +262,7 @@ export default function DashboardManager() {
 
             <div className="bg-white rounded-xl p-6 shadow-lg mt-8">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-bold">ðŸ“ Quizzes</h3>
+                <h3 className="text-xl font-bold">Quizzes</h3>
                 <Link to="/instructor/quiz-create" className="bg-primary text-white px-4 py-2 rounded-md text-sm font-semibold">
                   Create Quiz
                 </Link>
@@ -232,20 +283,23 @@ export default function DashboardManager() {
                         <td colSpan={4} className="px-4 py-6 text-center text-gray-500">No quizzes found</td>
                       </tr>
                     ) : (
-                      quizzes.map((quiz) => (
-                        <tr key={quiz._id} className="shadow-sm hover:shadow-md">
-                          <td className="px-4 py-3">{quiz.title}</td>
-                          <td className="px-4 py-3">{quiz.passingScore}%</td>
-                          <td className="px-4 py-3">{new Date(quiz.createdAt).toLocaleDateString()}</td>
-                          <td className="px-4 py-3">
-                            <div className="flex gap-2">
-                              <Link to={`/quiz/${quiz._id}`} className="text-blue-600 hover:underline">View</Link>
-                              <Link to={`/instructor/quiz-edit/${quiz._id}`} onClick={() => console.log('Editing quiz:', quiz)} className="text-green-600 hover:underline">Edit</Link>
-                              <button onClick={() => handleDeleteQuiz(quiz._id)} className="text-red-600 hover:underline">Delete</button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))
+                      quizzes.map((quiz, index) => {
+                        const quizId = quiz._id || quiz.id || '';
+                        return (
+                          <tr key={quizId || String(index)} className="shadow-sm hover:shadow-md">
+                            <td className="px-4 py-3">{quiz.title || 'N/A'}</td>
+                            <td className="px-4 py-3">{quiz.passingScore ?? 0}%</td>
+                            <td className="px-4 py-3">{formatDate(quiz.createdAt)}</td>
+                            <td className="px-4 py-3">
+                              <div className="flex gap-2">
+                                <Link to={`/quiz/${quizId}`} className="text-blue-600 hover:underline">View</Link>
+                                <Link to={`/instructor/quiz-edit/${quizId}`} className="text-green-600 hover:underline">Edit</Link>
+                                <button onClick={() => handleDeleteQuiz(String(quizId))} className="text-red-600 hover:underline">Delete</button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
                     )}
                   </tbody>
                 </table>
@@ -257,6 +311,3 @@ export default function DashboardManager() {
     </div>
   );
 }
-
-
-

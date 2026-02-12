@@ -1,6 +1,6 @@
 import { Navigate } from 'react-router-dom';
 import type { ReactElement } from 'react';
-import { getUser } from '../auth/utils/auth.storage';
+import { getUser } from '../../features/auth/utils/auth.storage';
 
 type RoleGuardProps = {
   allowedRoles: Array<'learner' | 'instructor' | 'admin'>;

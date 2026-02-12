@@ -2,21 +2,22 @@
 import { Link } from 'react-router-dom';
 import { PrimaryNav, TopBar } from '../../../core/layout/LayoutPieces';
 import { Sidebar } from '../../../core/layout/Sidebars';
-import { AdminTable } from '../../../shared/components/AdminTable';
+import { AdminTable } from '../../../components/AdminTable';
 import { api } from '../../../shared/utils/api';
 
-type LessonRow = {
+type QuizRow = {
   _id?: string;
   id?: string;
   title?: string;
-  category?: string;
-  createdBy?: string;
-  instructor?: { name?: string };
-  isPublished?: boolean;
+  lesson?: { title?: string } | string;
+  createdBy?: { name?: string; email?: string } | string;
+  questions?: unknown[];
+  passingScore?: number;
+  isActive?: boolean;
 };
 
-export default function AdminLessonsPage() {
-  const [lessons, setLessons] = useState<LessonRow[]>([]);
+export default function AdminQuizzesPage() {
+  const [quizzes, setQuizzes] = useState<QuizRow[]>([]);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState('');
 
@@ -25,12 +26,12 @@ export default function AdminLessonsPage() {
 
     const load = async () => {
       try {
-        const res = await api.lessons.list();
+        const res = await api.quizzes.list();
         if (!mounted) return;
-        setLessons((res.data.lessons || []) as LessonRow[]);
+        setQuizzes((res.data.quizzes || []) as QuizRow[]);
       } catch (err: unknown) {
         if (!mounted) return;
-        setError(err instanceof Error ? err.message : 'Failed to load lessons.');
+        setError(err instanceof Error ? err.message : 'Failed to load quizzes.');
       }
     };
 
@@ -40,25 +41,30 @@ export default function AdminLessonsPage() {
     };
   }, []);
 
-  const deleteLesson = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this lesson?')) return;
+  const deleteQuiz = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this quiz?')) return;
 
     setSaving(id);
     try {
-      await api.lessons.delete(id);
-      setLessons((prev) => prev.filter((lesson) => lesson._id !== id));
+      await api.quizzes.delete(id);
+      setQuizzes((prev) => prev.filter((quiz) => quiz._id !== id));
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to delete lesson.');
+      setError(err instanceof Error ? err.message : 'Failed to delete quiz.');
     } finally {
       setSaving('');
     }
   };
 
-  const rows = lessons.map((lesson) => ({
-    ...lesson,
-    _id: lesson._id || lesson.id,
-    createdBy: lesson.instructor?.name || lesson.createdBy || '—',
-    status: lesson.isPublished === false ? 'Draft' : 'Published'
+  const rows = quizzes.map((quiz) => ({
+    ...quiz,
+    _id: quiz._id || quiz.id,
+    lesson: typeof quiz.lesson === 'string' ? quiz.lesson : quiz.lesson?.title || '—',
+    createdBy:
+      typeof quiz.createdBy === 'string'
+        ? quiz.createdBy
+        : quiz.createdBy?.name || quiz.createdBy?.email || '—',
+    questions: Array.isArray(quiz.questions) ? quiz.questions.length : 0,
+    status: quiz.isActive === false ? 'Inactive' : 'Active'
   }));
 
   return (
@@ -69,8 +75,8 @@ export default function AdminLessonsPage() {
         items={[
           { label: 'Dashboard', to: '/dashboard-admin' },
           { label: 'Users', to: '/admin-users' },
-          { label: 'Lessons', to: '/admin-lessons', className: 'text-primary font-semibold' },
-          { label: 'Quizzes', to: '/admin-quizzes' },
+          { label: 'Lessons', to: '/admin-lessons' },
+          { label: 'Quizzes', to: '/admin-quizzes', className: 'text-primary font-semibold' },
           { label: 'Attempts', to: '/admin-quiz-attempts' }
         ]}
       />
@@ -81,8 +87,8 @@ export default function AdminLessonsPage() {
           links={[
             { label: 'Overview', to: '/dashboard-admin' },
             { label: 'Manage Users', to: '/admin-users' },
-            { label: 'Manage Lessons', active: true },
-            { label: 'Manage Quizzes', to: '/admin-quizzes' },
+            { label: 'Manage Lessons', to: '/admin-lessons' },
+            { label: 'Manage Quizzes', active: true },
             { label: 'Quiz Attempts', to: '/admin-quiz-attempts' },
             { label: 'Logout', to: '/login' }
           ]}
@@ -91,11 +97,11 @@ export default function AdminLessonsPage() {
         <div>
           <div className="flex items-center justify-between mb-6">
             <div>
-              <p className="text-primary uppercase font-semibold tracking-wider">/admin/lessons</p>
-              <h1 className="text-3xl font-extrabold">Lessons</h1>
+              <p className="text-primary uppercase font-semibold tracking-wider">/admin/quizzes</p>
+              <h1 className="text-3xl font-extrabold">Quizzes</h1>
             </div>
-            <Link to="/lesson-create" className="bg-primary text-white px-4 py-2 rounded-md font-semibold">
-              Create Lesson
+            <Link to="/quiz-create" className="bg-primary text-white px-4 py-2 rounded-md font-semibold">
+              Create Quiz
             </Link>
           </div>
 
@@ -105,8 +111,9 @@ export default function AdminLessonsPage() {
             <AdminTable
               columns={[
                 { key: 'title', label: 'Title' },
-                { key: 'category', label: 'Category' },
-                { key: 'createdBy', label: 'Created By' },
+                { key: 'lesson', label: 'Lesson' },
+                { key: 'questions', label: 'Questions' },
+                { key: 'passingScore', label: 'Passing Score' },
                 { key: 'status', label: 'Status' }
               ]}
               rows={rows}
@@ -114,15 +121,15 @@ export default function AdminLessonsPage() {
                 const id = String(row._id || row.id || '');
                 return (
                   <div className="flex items-center gap-3">
-                    <Link to={`/admin/lessons/${id}`} className="text-primary font-semibold text-sm hover:underline">
+                    <Link to={`/admin/quizzes/${id}`} className="text-primary font-semibold text-sm hover:underline">
                       View
                     </Link>
-                    <Link to={`/lesson-edit/${id}`} className="text-blue-600 font-semibold text-sm hover:underline">
+                    <Link to={`/quiz-edit/${id}`} className="text-blue-600 font-semibold text-sm hover:underline">
                       Edit
                     </Link>
                     <button
                       className="text-red-600 font-semibold text-sm"
-                      onClick={() => deleteLesson(id)}
+                      onClick={() => deleteQuiz(id)}
                       disabled={saving === id}
                     >
                       {saving === id ? 'Deleting...' : 'Delete'}
