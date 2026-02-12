@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import ProfileHeader from './ProfileHeader';
 
 type NavItem = {
   label: string;
@@ -41,12 +42,13 @@ export function PrimaryNav({ variant, items }: PrimaryNavProps) {
               <i data-lucide="book-open" className="h-8 w-8 text-primary"></i>
               <span className="text-2xl font-bold text-primary">Edu Learn</span>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
               {(items || []).map((item) => (
                 <Link key={item.label} to={item.to} className={item.className || 'text-gray-700 hover:text-primary transition-colors font-medium'}>
                   {item.label}
                 </Link>
               ))}
+              <ProfileHeader />
             </div>
           </div>
         </div>
