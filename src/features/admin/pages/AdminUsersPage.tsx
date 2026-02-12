@@ -3,12 +3,14 @@ import { PrimaryNav, TopBar } from '../../../core/layout/LayoutPieces';
 import { Sidebar } from '../../../core/layout/Sidebars';
 import { AdminTable } from '../../../components/AdminTable';
 import { api } from '../../../shared/utils/api';
+import { useToast } from '../../../shared/hooks/useToast';
 
 
 
 const roleOptions = ['learner', 'instructor', 'admin'];
 
 export default function AdminUsers() {
+  const toast = useToast();
   const [users, setUsers] = useState<any[]>([]);
   const [error, setError] = useState<string>('');
   const [saving, setSaving] = useState<string>('');
@@ -41,8 +43,11 @@ export default function AdminUsers() {
     try {
       const res = await api.admin.updateRole(id, role);
       setUsers((prev) => prev.map((user) => (user._id === id ? (res as any).data.user : user)));
+      toast.success('User role updated.');
     } catch (err: any) {
-      setError(err?.message || 'Failed to update role.');
+      const message = err?.message || 'Failed to update role.';
+      setError(message);
+      toast.error(message);
     } finally {
       setSaving('');
     }
@@ -53,8 +58,11 @@ export default function AdminUsers() {
     try {
       await api.admin.deleteUser(id);
       setUsers((prev) => prev.filter((user) => user._id !== id));
+      toast.success('User deleted.');
     } catch (err: any) {
-      setError(err?.message || 'Failed to delete user.');
+      const message = err?.message || 'Failed to delete user.';
+      setError(message);
+      toast.error(message);
     } finally {
       setSaving('');
     }
@@ -68,8 +76,11 @@ export default function AdminUsers() {
       setUsers([...users, (newUser as any).data.user]);
       setShowCreateModal(false);
       setFormData({ name: '', email: '', password: '', role: 'learner' });
+      toast.success('User created.');
     } catch (err: any) {
-      setError(err?.message || 'Failed to create user.');
+      const message = err?.message || 'Failed to create user.';
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }

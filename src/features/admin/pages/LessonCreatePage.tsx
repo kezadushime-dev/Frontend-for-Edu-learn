@@ -3,26 +3,26 @@ import { Link, useNavigate } from 'react-router-dom';
 import { PrimaryNav, TopBar } from '../../../core/layout/LayoutPieces';
 import { Sidebar } from '../../../core/layout/Sidebars';
 import { api } from '../../../shared/utils/api';
+import { useToast } from '../../../shared/hooks/useToast';
 
 export default function LessonCreate() {
   const navigate = useNavigate();
+  const toast = useToast();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [content, setContent] = useState('');
   const [category, setCategory] = useState('');
   const [order, setOrder] = useState('0');
   const [images, setImages] = useState<FileList | null>(null);
-  const [message, setMessage] = useState<{ text: string; type: 'error' | 'success' } | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!images || images.length === 0) {
-      setMessage({ text: 'Please upload at least one image.', type: 'error' });
+      toast.error('Please upload at least one image.');
       return;
     }
     setLoading(true);
-    setMessage(null);
     try {
       const form = new FormData();
       form.append('title', title);
@@ -32,10 +32,10 @@ export default function LessonCreate() {
       if (order) form.append('order', order);
       Array.from(images).forEach((file) => form.append('images', file));
       await api.lessons.create(form);
-      setMessage({ text: 'Lesson created successfully.', type: 'success' });
+      toast.success('Lesson created successfully.');
       window.setTimeout(() => navigate('/admin/lessons'), 600);
     } catch (err: any) {
-      setMessage({ text: err?.message || 'Failed to create lesson.', type: 'error' });
+      toast.error(err?.message || 'Failed to create lesson.');
     } finally {
       setLoading(false);
     }
@@ -147,10 +147,6 @@ export default function LessonCreate() {
                 />
               </div>
             </div>
-
-            {message ? (
-              <p className={`text-sm ${message.type === 'error' ? 'text-red-600' : 'text-green-600'}`}>{message.text}</p>
-            ) : null}
 
             <div className="flex gap-3">
               <button type="submit" className="bg-primary text-white px-5 py-2 rounded-md font-semibold disabled:opacity-60" disabled={loading}>

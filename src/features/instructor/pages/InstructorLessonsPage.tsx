@@ -5,6 +5,7 @@ import { Sidebar } from '../../../core/layout/Sidebars';
 import { AdminFormFields } from '../../../components/AdminFormFields';
 import { uiStore } from '../../../shared/data/uiStore';
 import { api } from '../../../shared/utils/api';
+import { useToast } from '../../../shared/hooks/useToast';
 
 interface Lesson {
   _id?: string;
@@ -18,6 +19,7 @@ interface Lesson {
 }
 
 export default function InstructorLessons() {
+  const toast = useToast();
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -49,11 +51,11 @@ export default function InstructorLessons() {
   const handleSaveEdit = async () => {
     try {
       await api.lessons.delete(selectedLesson._id || selectedLesson.id);
-      alert('Lesson updated successfully!');
+      toast.success('Lesson updated successfully!');
       fetchLessons();
       setEditMode(false);
     } catch (err: any) {
-      alert(err?.response?.data?.message || 'Failed to update lesson');
+      toast.error(err?.response?.data?.message || 'Failed to update lesson');
     }
   };
 
@@ -61,10 +63,10 @@ export default function InstructorLessons() {
     if (window.confirm('Delete lesson?')) {
       try {
         await api.lessons.delete(id);
-        alert('Lesson deleted successfully!');
+        toast.success('Lesson deleted successfully!');
         fetchLessons();
       } catch (err: any) {
-        alert(err?.response?.data?.message || 'Failed to delete lesson');
+        toast.error(err?.response?.data?.message || 'Failed to delete lesson');
       }
     }
   };

@@ -2,40 +2,40 @@
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Footer, PrimaryNav, TopBar } from '../../../core/layout/LayoutPieces';
 import { api } from '../../../shared/utils/api';
+import { useToast } from '../../../shared/hooks/useToast';
 
 export default function ResetPassword() {
   const navigate = useNavigate();
   const { token } = useParams<{ token: string }>();
+  const toast = useToast();
 
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<{ text: string; type: 'error' | 'success' } | null>(null);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setMessage(null);
 
     if (!token) {
-      setMessage({ text: 'Invalid or missing token. Use the link from your email.', type: 'error' });
+      toast.error('Invalid or missing token. Use the link from your email.');
       return;
     }
 
     if (password !== confirmPassword) {
-      setMessage({ text: 'Passwords do not match.', type: 'error' });
+      toast.error('Passwords do not match.');
       return;
     }
 
     setLoading(true);
     try {
       await api.auth.resetPassword(token, password);
-      setMessage({ text: 'Password updated successfully! Redirecting to login...', type: 'success' });
+      toast.success('Password updated successfully! Redirecting to login...');
 
       window.setTimeout(() => {
         navigate('/login');
       }, 3000);
     } catch (err: any) {
-      setMessage({ text: err?.message || 'Failed to reset password. Try again.', type: 'error' });
+      toast.error(err?.message || 'Failed to reset password. Try again.');
     } finally {
       setLoading(false);
     }
@@ -85,10 +85,6 @@ export default function ResetPassword() {
                   className="p-4 text-gray-800 rounded-md border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/40"
                 />
               </div>
-
-              {message ? (
-                <p className={`text-sm ${message.type === 'error' ? 'text-red-600' : 'text-green-600'}`}>{message.text}</p>
-              ) : null}
 
               <button
                 type="submit"

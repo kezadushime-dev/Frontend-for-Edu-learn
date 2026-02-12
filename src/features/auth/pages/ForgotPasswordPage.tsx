@@ -2,21 +2,21 @@
 import { Link } from 'react-router-dom';
 import { Footer, PrimaryNav, TopBar } from '../../../core/layout/LayoutPieces';
 import { api } from '../../../shared/utils/api';
+import { useToast } from '../../../shared/hooks/useToast';
 
 export default function ForgotPassword() {
+  const toast = useToast();
   const [email, setEmail] = useState('');
-  const [message, setMessage] = useState<{ text: string; type: 'error' | 'success' } | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setLoading(true);
-    setMessage(null);
     try {
       await api.auth.forgotPassword(email.trim().toLowerCase());
-      setMessage({ text: 'Reset link sent. Check your inbox.', type: 'success' });
+      toast.success('Reset link sent. Check your inbox.');
     } catch (err: any) {
-      setMessage({ text: err?.message || 'Failed to send reset link.', type: 'error' });
+      toast.error(err?.message || 'Failed to send reset link.');
     } finally {
       setLoading(false);
     }
@@ -61,10 +61,6 @@ export default function ForgotPassword() {
                 {loading ? 'Sending...' : 'Send Reset Link'}
               </button>
             </form>
-
-            {message ? (
-              <p className={`text-sm mt-4 ${message.type === 'error' ? 'text-red-600' : 'text-green-600'}`}>{message.text}</p>
-            ) : null}
 
             <div className="mt-6 flex items-center justify-between text-sm">
               <Link to="/login" className="text-primary font-semibold">

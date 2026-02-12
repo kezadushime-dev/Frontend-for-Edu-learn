@@ -2,23 +2,23 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { Footer, PrimaryNav, TopBar } from '../../../core/layout/LayoutPieces';
 import { api } from '../../../shared/utils/api';
+import { useToast } from '../../../shared/hooks/useToast';
 import { clearAuth } from '../utils/auth.storage';
 
 export default function Login() {
   const navigate = useNavigate();
+  const toast = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [message, setMessage] = useState<{ text: string; type: 'error' | 'success' } | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setLoading(true);
-    setMessage(null);
     clearAuth();
     try {
       const user = await api.auth.login(email.trim().toLowerCase(), password);
-      setMessage({ text: 'Login successful. Redirecting...', type: 'success' });
+      toast.success('Login successful. Redirecting...');
       const role = user.role || 'learner';
       const redirect =
         role === 'admin' ? '/dashboard-admin' : role === 'instructor' ? '/dashboard-manager' : '/dashboard-learner';
@@ -26,10 +26,7 @@ export default function Login() {
         navigate(redirect);
       }, 500);
     } catch (err: any) {
-      setMessage({
-        text: err?.message || 'Login failed. Please check your credentials.',
-        type: 'error'
-      });
+      toast.error(err?.message || 'Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }
@@ -89,10 +86,6 @@ export default function Login() {
                 {loading ? 'Signing in...' : 'Login'}
               </button>
             </form>
-
-            {message ? (
-              <p className={`text-sm mt-4 ${message.type === 'error' ? 'text-red-600' : 'text-green-600'}`}>{message.text}</p>
-            ) : null}
 
             <p className="text-sm text-gray-600 mt-6">
               No account?{' '}

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { PrimaryNav, TopBar } from '../../../core/layout/LayoutPieces';
 import { Sidebar } from '../../../core/layout/Sidebars';
 import { api } from '../../../shared/utils/api';
+import { useToast } from '../../../shared/hooks/useToast';
 
 type QuestionForm = {
   questionText: string;
@@ -13,6 +14,7 @@ type QuestionForm = {
 
 export default function QuizCreate() {
   const navigate = useNavigate();
+  const toast = useToast();
   const [lessonId, setLessonId] = useState('');
   const [title, setTitle] = useState('');
   const [passingScore, setPassingScore] = useState('70');
@@ -20,7 +22,6 @@ export default function QuizCreate() {
   const [questions, setQuestions] = useState<QuestionForm[]>([
     { questionText: '', options: '', correctOptionIndex: '0', points: '1' }
   ]);
-  const [message, setMessage] = useState<{ text: string; type: 'error' | 'success' } | null>(null);
   const [loading, setLoading] = useState(false);
 
   const updateQuestion = (index: number, key: keyof QuestionForm, value: string) => {
@@ -38,7 +39,6 @@ export default function QuizCreate() {
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setLoading(true);
-    setMessage(null);
     try {
       const payload = {
         lesson: lessonId,
@@ -53,10 +53,10 @@ export default function QuizCreate() {
         }))
       };
       await api.quizzes.create(payload);
-      setMessage({ text: 'Quiz created successfully.', type: 'success' });
+      toast.success('Quiz created successfully.');
       window.setTimeout(() => navigate('/admin/quizzes'), 600);
     } catch (err: any) {
-      setMessage({ text: err?.message || 'Failed to create quiz.', type: 'error' });
+      toast.error(err?.message || 'Failed to create quiz.');
     } finally {
       setLoading(false);
     }
@@ -212,10 +212,6 @@ export default function QuizCreate() {
                 ))}
               </div>
             </div>
-
-            {message ? (
-              <p className={`text-sm ${message.type === 'error' ? 'text-red-600' : 'text-green-600'}`}>{message.text}</p>
-            ) : null}
 
             <div className="flex gap-3">
               <button type="submit" className="bg-primary text-white px-5 py-2 rounded-md font-semibold disabled:opacity-60" disabled={loading}>

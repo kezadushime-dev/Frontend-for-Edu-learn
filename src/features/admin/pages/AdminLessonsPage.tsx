@@ -4,6 +4,7 @@ import { PrimaryNav, TopBar } from '../../../core/layout/LayoutPieces';
 import { Sidebar } from '../../../core/layout/Sidebars';
 import { AdminTable } from '../../../components/AdminTable';
 import { api } from '../../../shared/utils/api';
+import { useToast } from '../../../shared/hooks/useToast';
 
 type LessonRow = {
   _id?: string;
@@ -16,6 +17,7 @@ type LessonRow = {
 };
 
 export default function AdminLessonsPage() {
+  const toast = useToast();
   const [lessons, setLessons] = useState<LessonRow[]>([]);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState('');
@@ -30,7 +32,9 @@ export default function AdminLessonsPage() {
         setLessons((res.data.lessons || []) as LessonRow[]);
       } catch (err: unknown) {
         if (!mounted) return;
-        setError(err instanceof Error ? err.message : 'Failed to load lessons.');
+        const message = err instanceof Error ? err.message : 'Failed to load lessons.';
+        setError(message);
+        toast.error(message);
       }
     };
 
@@ -47,8 +51,11 @@ export default function AdminLessonsPage() {
     try {
       await api.lessons.delete(id);
       setLessons((prev) => prev.filter((lesson) => lesson._id !== id));
+      toast.success('Lesson deleted.');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to delete lesson.');
+      const message = err instanceof Error ? err.message : 'Failed to delete lesson.';
+      setError(message);
+      toast.error(message);
     } finally {
       setSaving('');
     }

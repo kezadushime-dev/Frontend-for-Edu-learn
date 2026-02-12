@@ -5,8 +5,10 @@ import { Sidebar } from '../../../core/layout/Sidebars';
 import { AdminFormFields } from '../../../components/AdminFormFields';
 import { uiStore } from '../../../shared/data/uiStore';
 import { api } from '../../../shared/utils/api';
+import { useToast } from '../../../shared/hooks/useToast';
 
 export default function InstructorLessonCreate() {
+  const toast = useToast();
   const [formData, setFormData] = useState<{
     title?: string;
     description?: string;
@@ -19,14 +21,14 @@ export default function InstructorLessonCreate() {
     e.preventDefault();
     try {
       if (!formData.title || !formData.description || !formData.content || !formData.category) {
-        alert('Please fill in all required fields');
+        toast.error('Please fill in all required fields');
         return;
       }
       await api.lessons.create(formData as any);
-      alert('Lesson created successfully!');
+      toast.success('Lesson created successfully!');
       navigate('/instructor/lessons');
     } catch (err: any) {
-      alert(err?.response?.data?.message || 'Failed to create lesson');
+      toast.error(err?.response?.data?.message || 'Failed to create lesson');
     }
   };
 

@@ -4,6 +4,7 @@ import { PrimaryNav, TopBar } from '../../../core/layout/LayoutPieces';
 import { Sidebar } from '../../../core/layout/Sidebars';
 import { AdminTable } from '../../../components/AdminTable';
 import { api } from '../../../shared/utils/api';
+import { useToast } from '../../../shared/hooks/useToast';
 
 type QuizRow = {
   _id?: string;
@@ -17,6 +18,7 @@ type QuizRow = {
 };
 
 export default function AdminQuizzesPage() {
+  const toast = useToast();
   const [quizzes, setQuizzes] = useState<QuizRow[]>([]);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState('');
@@ -31,7 +33,9 @@ export default function AdminQuizzesPage() {
         setQuizzes((res.data.quizzes || []) as QuizRow[]);
       } catch (err: unknown) {
         if (!mounted) return;
-        setError(err instanceof Error ? err.message : 'Failed to load quizzes.');
+        const message = err instanceof Error ? err.message : 'Failed to load quizzes.';
+        setError(message);
+        toast.error(message);
       }
     };
 
@@ -48,8 +52,11 @@ export default function AdminQuizzesPage() {
     try {
       await api.quizzes.delete(id);
       setQuizzes((prev) => prev.filter((quiz) => quiz._id !== id));
+      toast.success('Quiz deleted.');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to delete quiz.');
+      const message = err instanceof Error ? err.message : 'Failed to delete quiz.';
+      setError(message);
+      toast.error(message);
     } finally {
       setSaving('');
     }

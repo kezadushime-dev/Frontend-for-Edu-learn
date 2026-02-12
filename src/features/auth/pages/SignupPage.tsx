@@ -2,34 +2,31 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { Footer, PrimaryNav, TopBar } from '../../../core/layout/LayoutPieces';
 import { api } from '../../../shared/utils/api';
+import { useToast } from '../../../shared/hooks/useToast';
 import { clearAuth } from '../utils/auth.storage';
 
 export default function Signup() {
   const navigate = useNavigate();
+  const toast = useToast();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [message, setMessage] = useState<{ text: string; type: 'error' | 'success' } | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setLoading(true);
-    setMessage(null);
     clearAuth();
 
     try {
       await api.auth.register(name.trim(), email.trim().toLowerCase(), password);
-      setMessage({ text: 'Account created. Redirecting...', type: 'success' });
+      toast.success('Account created. Redirecting...');
 
       window.setTimeout(() => {
         navigate('/login'); // change this if you want a different landing page
       }, 500);
     } catch (err: any) {
-      setMessage({
-        text: err?.message || 'Signup failed. Please check your details.',
-        type: 'error'
-      });
+      toast.error(err?.message || 'Signup failed. Please check your details.');
     } finally {
       setLoading(false);
     }
@@ -103,10 +100,6 @@ export default function Signup() {
                 {loading ? 'Creating...' : 'Create Account'}
               </button>
             </form>
-
-            {message ? (
-              <p className={`text-sm mt-4 ${message.type === 'error' ? 'text-red-600' : 'text-green-600'}`}>{message.text}</p>
-            ) : null}
 
             <p className="text-sm text-gray-600 mt-6">
               Already have an account?{' '}

@@ -3,8 +3,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { PrimaryNav, TopBar } from '../../../core/layout/LayoutPieces';
 import { Sidebar } from '../../../core/layout/Sidebars';
 import { api } from '../../../shared/utils/api';
+import { useToast } from '../../../shared/hooks/useToast';
 
 export default function InstructorQuizCreate() {
+  const toast = useToast();
   const [lessonName, setLessonName] = useState('');
   const [lessonId, setLessonId] = useState('');
   const [lessons, setLessons] = useState<any[]>([]);
@@ -80,7 +82,7 @@ export default function InstructorQuizCreate() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!lessonId) {
-      alert('Please select a valid lesson');
+      toast.error('Please select a valid lesson');
       return;
     }
     try {
@@ -99,10 +101,10 @@ export default function InstructorQuizCreate() {
         isActive
       };
       await api.quizzes.create(quizData);
-      alert('Quiz created successfully!');
+      toast.success('Quiz created successfully!');
       navigate('/instructor/quizzes');
     } catch (err: any) {
-      alert(err?.response?.data?.message || 'Failed to create quiz');
+      toast.error(err?.response?.data?.message || 'Failed to create quiz');
     }
   };
 

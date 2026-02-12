@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import ProfileHeader from './ProfileHeader';
+import ProfileHeader from '../../components/ProfileHeader';
 
 type NavItem = {
   label: string;
