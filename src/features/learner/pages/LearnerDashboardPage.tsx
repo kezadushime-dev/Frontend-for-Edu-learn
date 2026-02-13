@@ -109,8 +109,8 @@ export default function DashboardLearner() {
             <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-8">
               <div>
                 <p className="text-primary uppercase font-semibold tracking-wider">Dashboard</p>
-                <h1 className="text-4xl font-extrabold gradient-text">Learner Overview</h1>
-                <p className="text-gray-600 mt-2">Continue where you left off.</p>
+                <h1 className="text-4xl font-extrabold gradient-text">Welcome back, {userData?.name || 'Learner'}</h1>
+                <p className="text-gray-600 mt-2">Continue where you left off and track your live progress.</p>
               </div>
               <div className="flex gap-3">
                 <Link to="/lesson" className="bg-primary text-white px-5 py-2 rounded-md font-semibold hover:bg-blue-700 transition-all duration-300">
@@ -125,75 +125,6 @@ export default function DashboardLearner() {
               </div>
             </div>
 
-            {error ? <p className="text-red-600 text-sm mb-6">{error}</p> : null}
-
-            <div className="grid md:grid-cols-4 gap-6">
-              <div className="bg-white rounded-xl p-6 shadow-lg hover-lift">
-                <p className="text-sm text-gray-500">Lessons Available</p>
-                <h3 className="text-3xl font-bold mt-2">{lessonCount}</h3>
-                <p className="text-xs text-gray-500 mt-2">{uiStore.statsNotes.lessons}</p>
-              </div>
-              <div className="bg-white rounded-xl p-6 shadow-lg hover-lift">
-                <p className="text-sm text-gray-500">Quiz Average</p>
-                <h3 className="text-3xl font-bold mt-2">{avg}%</h3>
-                <p className="text-xs text-gray-500 mt-2">From quiz submissions</p>
-              </div>
-              <div className="bg-white rounded-xl p-6 shadow-lg hover-lift">
-                <p className="text-sm text-gray-500">Quizzes Completed</p>
-                <h3 className="text-3xl font-bold mt-2">{completedQuizzes}</h3>
-                <p className="text-xs text-gray-500 mt-2">From /quizzes</p>
-              </div>
-            </div>
-
-            <div className="grid lg:grid-cols-2 gap-6 mt-8">
-              <div className="bg-white rounded-xl p-6 shadow-lg">
-                <h3 className="text-xl font-bold mb-4">Continue Learning</h3>
-                <div className="grid gap-3 text-sm">
-                  {uiStore.learner.continueLessons.length ? (
-                    uiStore.learner.continueLessons.slice(0, 3).map((lesson) => (
-                      <div key={lesson.title} className="flex items-center justify-between">
-                        <span>{lesson.title}</span>
-                        <Link to="/lesson" className="text-primary font-semibold">
-                          Open
-                        </Link>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-sm text-gray-500">No lesson data available.</p>
-                  )}
-                </div>
-              </div>
-              <div className="bg-white rounded-xl p-6 shadow-lg">
-                <h3 className="text-xl font-bold mb-4">Upcoming Quizzes</h3>
-                <ul className="space-y-3 text-sm text-gray-600">
-                  {uiStore.learner.upcomingQuizzes.length ? (
-                    uiStore.learner.upcomingQuizzes.slice(0, 3).map((quiz) => (
-                      <li key={`${quiz.module}-${quiz.title}`}>{`${quiz.module}: ${quiz.title}`}</li>
-                    ))
-                  ) : (
-                    <li>No quiz data available.</li>
-                  )}
-                </ul>
-              </div>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-6 mt-8">
-              <div className="bg-white rounded-xl p-6 shadow-lg">
-                <p className="text-sm text-gray-500">Total Quizzes</p>
-                <h3 className="text-3xl font-bold mt-2">{quizCount}</h3>
-                <p className="text-xs text-gray-500 mt-2">From /quizzes</p>
-              </div>
-              <div className="bg-white rounded-xl p-6 shadow-lg">
-                <p className="text-sm text-gray-500">Next Step</p>
-                <h3 className="text-xl font-bold mt-2">Continue a lesson or take a quiz</h3>
-                <p className="text-xs text-gray-500 mt-2">Your progress is saved locally.</p>
-              </div>
-            </div>
-            <div className="mb-8">
-              <p className="text-primary uppercase font-semibold tracking-wider text-sm">Real-time Stats</p>
-              <h1 className="text-4xl font-extrabold gradient-text">Welcome back, {userData?.name || 'Learner'}</h1>
-            </div>
-
             {error && <p className="bg-red-50 text-red-600 p-4 rounded-lg text-sm mb-6 border border-red-100">{error}</p>}
 
             {loading ? (
@@ -203,10 +134,16 @@ export default function DashboardLearner() {
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                  <StatCard title="Total Lessons" value={totalLessons} note="Available in catalog" />
-                  <StatCard title="My Progress" value={progressPercentage} note={`${completedLessonsCount} of ${totalLessons} completed`} noteColor="text-green-600" />
-                  <StatCard title="Quizzes Passed" value={completedQuizzesCount} note="Verified by server" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+                  <StatCard title="Lessons Available" value={lessonCount} note={uiStore.statsNotes.lessons} />
+                  <StatCard title="Quiz Average" value={`${avg}%`} note="From local quiz submissions" />
+                  <StatCard title="Quizzes Completed" value={completedQuizzes} note="Tracked locally" />
+                  <StatCard
+                    title="My Progress"
+                    value={`${progressPercentage}%`}
+                    note={`${completedLessonsCount} of ${totalLessons} lessons completed`}
+                    noteColor="text-green-600"
+                  />
                   <StatCard title="Success Rate" value={`${successRate}%`} note="Overall completion" />
                 </div>
 
@@ -223,11 +160,12 @@ export default function DashboardLearner() {
                           <Link to={`/lesson/${lesson._id}`} className="text-primary text-sm font-semibold hover:underline">Start</Link>
                         </div>
                       ))}
+                      {lessons.length === 0 ? <p className="text-sm text-gray-500">No lessons available.</p> : null}
                     </div>
                   </div>
 
                   <div className="bg-white rounded-xl p-6 shadow-lg">
-                    <h3 className="text-xl font-bold mb-4">Available Quizzes</h3>
+                    <h3 className="text-xl font-bold mb-4">Upcoming Quizzes</h3>
                     <div className="space-y-4">
                       {quizzes.slice(0, 4).map((quiz) => (
                         <div key={quiz._id} className="flex items-center justify-between border-b border-gray-50 pb-2">
@@ -235,7 +173,21 @@ export default function DashboardLearner() {
                           <Link to={`/quiz/${quiz._id}`} className="bg-blue-50 text-primary px-3 py-1 rounded text-xs font-bold hover:bg-primary hover:text-white transition">Take Quiz</Link>
                         </div>
                       ))}
+                      {quizzes.length === 0 ? <p className="text-sm text-gray-500">No quizzes available.</p> : null}
                     </div>
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6 mt-8">
+                  <div className="bg-white rounded-xl p-6 shadow-lg">
+                    <p className="text-sm text-gray-500">Total Quizzes</p>
+                    <h3 className="text-3xl font-bold mt-2">{quizCount}</h3>
+                    <p className="text-xs text-gray-500 mt-2">From /quizzes</p>
+                  </div>
+                  <div className="bg-white rounded-xl p-6 shadow-lg">
+                    <p className="text-sm text-gray-500">Next Step</p>
+                    <h3 className="text-xl font-bold mt-2">Continue a lesson or take a quiz</h3>
+                    <p className="text-xs text-gray-500 mt-2">Your report card updates from live quiz analytics.</p>
                   </div>
                 </div>
               </>

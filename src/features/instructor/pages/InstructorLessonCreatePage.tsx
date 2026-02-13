@@ -10,25 +10,56 @@ import { useToast } from '../../../shared/hooks/useToast';
 export default function InstructorLessonCreate() {
   const toast = useToast();
   const [formData, setFormData] = useState<{
-    title?: string;
-    description?: string;
-    content?: string;
-    category?: string;
-  }>({});
+    title: string;
+    description: string;
+    content: string;
+    category: string;
+    order: string;
+    images: FileList | null;
+  }>({
+    title: '',
+    description: '',
+    content: '',
+    category: '',
+    order: '',
+    images: null
+  });
+  const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const title = formData.title.trim();
+    const description = formData.description.trim();
+    const content = formData.content.trim();
+    const category = formData.category.trim();
+
+    if (!title || !description || !content || !category) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    const payload = new FormData();
+    payload.append('title', title);
+    payload.append('description', description);
+    payload.append('content', content);
+    payload.append('category', category);
+
+    if (formData.order.trim()) payload.append('order', formData.order.trim());
+    if (formData.images?.length) {
+      Array.from(formData.images).forEach((file) => payload.append('images', file));
+    }
+
+    setSaving(true);
     try {
-      if (!formData.title || !formData.description || !formData.content || !formData.category) {
-        toast.error('Please fill in all required fields');
-        return;
-      }
-      await api.lessons.create(formData as any);
+      await api.lessons.create(payload);
       toast.success('Lesson created successfully!');
       navigate('/instructor/lessons');
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Failed to create lesson');
+      toast.error(err?.message || err?.response?.data?.message || 'Failed to create lesson');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -71,8 +102,8 @@ export default function InstructorLessonCreate() {
               onChange={(key, value) => setFormData({ ...formData, [key]: value })}
             />
             <div className="flex gap-3">
-              <button type="submit" className="bg-primary text-white px-5 py-2 rounded-md font-semibold">
-                Save Lesson
+              <button type="submit" className="bg-primary text-white px-5 py-2 rounded-md font-semibold disabled:opacity-60" disabled={saving}>
+                {saving ? 'Saving...' : 'Save Lesson'}
               </button>
               <Link to="/instructor/lessons" className="border-2 border-primary text-primary px-5 py-2 rounded-md font-semibold">
                 Cancel

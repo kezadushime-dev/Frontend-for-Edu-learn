@@ -20,6 +20,7 @@ export default function AdminLessonsPage() {
   const toast = useToast();
   const [lessons, setLessons] = useState<LessonRow[]>([]);
   const [error, setError] = useState('');
+  const [saving, setSaving] = useState('');
 
   useEffect(() => {
     let mounted = true;
