@@ -8,7 +8,6 @@ import { api } from '../utils/api';
 export default function AdminLessons() {
   const [lessons, setLessons] = useState<any[]>([]);
   const [error, setError] = useState('');
-  const [saving, setSaving] = useState<string>('');
 
   useEffect(() => {
     let mounted = true;
@@ -27,20 +26,6 @@ export default function AdminLessons() {
       mounted = false;
     };
   }, []);
-
-  const deleteLesson = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this lesson?')) return;
-    
-    setSaving(id);
-    try {
-      await api.lessons.delete(id);
-      setLessons((prev) => prev.filter((lesson) => lesson._id !== id));
-    } catch (err: any) {
-      setError(err?.message || 'Failed to delete lesson.');
-    } finally {
-      setSaving('');
-    }
-  };
 
   const rows = lessons.map((lesson) => ({
     ...lesson,
@@ -100,26 +85,13 @@ export default function AdminLessons() {
               renderActions={(row) => {
                 const id = String(row._id || row.id || '');
                 return (
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center">
                     <Link 
-                      to={`/lesson/${id}`}
+                      to={`/admin-lessons/${id}`}
                       className="text-primary font-semibold text-sm hover:underline"
                     >
                       View
                     </Link>
-                    <Link 
-                      to={`/lesson-edit/${id}`}
-                      className="text-blue-600 font-semibold text-sm hover:underline"
-                    >
-                      Edit
-                    </Link>
-                    <button
-                      className="text-red-600 font-semibold text-sm"
-                      onClick={() => deleteLesson(id)}
-                      disabled={saving === id}
-                    >
-                      {saving === id ? 'Deleting...' : 'Delete'}
-                    </button>
                   </div>
                 );
               }}

@@ -14,6 +14,8 @@ import AdminUsers from './pages/AdminUsers';
 import AdminLessons from './pages/AdminLessons';
 import AdminQuizzes from './pages/AdminQuizzes';
 import AdminQuizAttempts from './pages/AdminQuizAttempts';
+import AdminLessonView from './pages/AdminLessonView';
+import AdminQuizView from './pages/AdminQuizView';
 import LessonCreate from './pages/LessonCreate';
 import QuizCreate from './pages/QuizCreate';
 import { useLucide } from './utils/useLucide';
@@ -40,7 +42,9 @@ function App() {
 
       <Route path="admin-users" element={<AdminUsers />} />
       <Route path="admin-lessons" element={<AdminLessons />} />
+      <Route path="admin-lessons/:id" element={<AdminLessonView />} />
       <Route path="admin-quizzes" element={<AdminQuizzes />} />
+      <Route path="admin-quizzes/:id" element={<AdminQuizView />} />
       <Route path="admin-quiz-attempts" element={<AdminQuizAttempts />} />
 
       <Route path="lesson-create" element={<LessonCreate />} />

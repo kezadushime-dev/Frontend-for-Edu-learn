@@ -8,7 +8,6 @@ import { api } from '../utils/api';
 export default function AdminQuizzes() {
   const [quizzes, setQuizzes] = useState<any[]>([]);
   const [error, setError] = useState('');
-  const [saving, setSaving] = useState<string>('');
 
   useEffect(() => {
     let mounted = true;
@@ -27,20 +26,6 @@ export default function AdminQuizzes() {
       mounted = false;
     };
   }, []);
-
-  const deleteQuiz = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this quiz?')) return;
-    
-    setSaving(id);
-    try {
-      await api.quizzes.delete(id);
-      setQuizzes((prev) => prev.filter((quiz) => quiz._id !== id));
-    } catch (err: any) {
-      setError(err?.message || 'Failed to delete quiz.');
-    } finally {
-      setSaving('');
-    }
-  };
 
   const rows = quizzes.map((quiz) => ({
     ...quiz,
@@ -102,26 +87,13 @@ export default function AdminQuizzes() {
               renderActions={(row) => {
                 const id = String(row._id || row.id || '');
                 return (
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center">
                     <Link 
-                      to={`/quiz/${id}`}
+                      to={`/admin-quizzes/${id}`}
                       className="text-primary font-semibold text-sm hover:underline"
                     >
                       View
                     </Link>
-                    <Link 
-                      to={`/quiz-edit/${id}`}
-                      className="text-blue-600 font-semibold text-sm hover:underline"
-                    >
-                      Edit
-                    </Link>
-                    <button
-                      className="text-red-600 font-semibold text-sm"
-                      onClick={() => deleteQuiz(id)}
-                      disabled={saving === id}
-                    >
-                      {saving === id ? 'Deleting...' : 'Delete'}
-                    </button>
                   </div>
                 );
               }}
