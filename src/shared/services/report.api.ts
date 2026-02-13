@@ -1,4 +1,4 @@
-import { getToken } from '../../features/auth/utils/auth.storage';
+import { getToken, getUser } from '../../features/auth/utils/auth.storage';
 import { ApiError, request } from './apiBase';
 import { normalizeReportRequest, normalizeRequestCollection } from '../report/report.utils';
 import type { ReportDecision, ReportRequest } from '../types/report';
@@ -7,6 +7,9 @@ type RequestDownloadInput = {
   courseId?: string;
   courseName?: string;
   classLevel?: string;
+  quizId?: string;
+  quizTitle?: string;
+  quiz?: string;
 };
 
 type ReportRequestFilters = {
@@ -36,12 +39,24 @@ const toRecord = (value: unknown): Record<string, unknown> =>
 const pickRequestLikeObject = (payload: unknown): unknown => {
   const body = toRecord(payload);
   const data = toRecord(body.data);
+  const nestedData = toRecord(data.data);
+  const resultData = toRecord(data.result);
   return (
+    nestedData.request ||
+    nestedData.reportRequest ||
+    nestedData.report_request ||
+    nestedData.report ||
+    resultData.request ||
+    resultData.reportRequest ||
+    resultData.report_request ||
+    resultData.report ||
     data.request ||
     data.reportRequest ||
+    data.report_request ||
     data.report ||
     body.request ||
     body.reportRequest ||
+    body.report_request ||
     body.report ||
     payload
   );
@@ -50,15 +65,34 @@ const pickRequestLikeObject = (payload: unknown): unknown => {
 const getRequestList = (payload: unknown): ReportRequest[] => {
   const body = toRecord(payload);
   const data = toRecord(body.data);
+  const nestedData = toRecord(data.data);
+  const resultData = toRecord(data.result);
   const candidates = [
+    nestedData.reports,
+    nestedData.requests,
+    nestedData.reportRequests,
+    nestedData.report_requests,
+    nestedData.items,
+    nestedData.rows,
+    resultData.reports,
+    resultData.requests,
+    resultData.reportRequests,
+    resultData.report_requests,
+    resultData.items,
+    resultData.rows,
     data.reports,
     data.requests,
     data.reportRequests,
+    data.report_requests,
     data.items,
+    data.rows,
+    body.data,
     body.reports,
     body.requests,
     body.reportRequests,
+    body.report_requests,
     body.items,
+    body.rows,
     payload
   ];
 
@@ -67,7 +101,8 @@ const getRequestList = (payload: unknown): ReportRequest[] => {
     if (normalized.length) return normalized;
   }
 
-  return [];
+  const single = normalizeReportRequest(pickRequestLikeObject(payload));
+  return single.id || single.studentId ? [single] : [];
 };
 
 const getMostRecentRequest = (items: ReportRequest[]): ReportRequest | null => {
@@ -79,6 +114,40 @@ const getMostRecentRequest = (items: ReportRequest[]): ReportRequest | null => {
       return bDate - aDate;
     })
     .at(0) || null;
+};
+
+const getCurrentLearnerIdSet = (): Set<string> => {
+  const user = getUser();
+  const ids = [user?._id, user?.id]
+    .filter((value): value is string => Boolean(value && value.trim()))
+    .map((value) => value.trim().toLowerCase());
+  return new Set(ids);
+};
+
+const matchesLearner = (request: ReportRequest, learnerIds: Set<string>): boolean => {
+  if (!learnerIds.size) return true;
+  if (!request.studentId) return false;
+  return learnerIds.has(request.studentId.toLowerCase());
+};
+
+const extractLearnerScopedRequest = (payload: unknown, learnerIds: Set<string>): ReportRequest | null => {
+  const requestItems = getRequestList(payload);
+  const scopedItems = requestItems.filter((item) => matchesLearner(item, learnerIds));
+  const fromList = getMostRecentRequest(scopedItems);
+  if (fromList) return fromList;
+
+  // Some learner-scoped endpoints may return one item without student id.
+  if (learnerIds.size && requestItems.length === 1) {
+    return requestItems[0];
+  }
+
+  const requestLike = normalizeReportRequest(pickRequestLikeObject(payload));
+  if (!(requestLike.id || requestLike.studentId)) return null;
+  if (!learnerIds.size) return requestLike;
+  if (requestLike.studentId) return matchesLearner(requestLike, learnerIds) ? requestLike : null;
+
+  // Allow single-object learner endpoints that omit student id.
+  return requestItems.length === 0 ? requestLike : null;
 };
 
 const extractSingleRequest = (payload: unknown): ReportRequest | null => {
@@ -97,7 +166,15 @@ const stringifyQuery = (filters: ReportRequestFilters): string => {
   return query ? `?${query}` : '';
 };
 
-const isNotFound = (error: unknown): boolean => error instanceof ApiError && error.status === 404;
+const applyFilters = (items: ReportRequest[], filters: ReportRequestFilters): ReportRequest[] =>
+  items.filter((item) => {
+    const statusMatch = filters.status && filters.status !== 'ALL' ? item.status === filters.status : true;
+    const courseMatch = filters.courseId ? item.courseId === filters.courseId : true;
+    return statusMatch && courseMatch;
+  });
+
+const isFallbackError = (error: unknown): boolean =>
+  error instanceof ApiError && (error.status === 404 || error.status === 405);
 
 const tryFallback = async <T>(calls: Array<() => Promise<T>>): Promise<T> => {
   let lastError: unknown = null;
@@ -106,7 +183,7 @@ const tryFallback = async <T>(calls: Array<() => Promise<T>>): Promise<T> => {
       return await call();
     } catch (error) {
       lastError = error;
-      if (!isNotFound(error)) break;
+      if (!isFallbackError(error)) break;
     }
   }
   throw lastError ?? new Error('No matching endpoint for report workflow.');
@@ -139,38 +216,81 @@ export const reportService = {
   },
 
   getLearnerRequest: async (): Promise<ReportRequest | null> => {
-    try {
-      const response = await tryFallback<unknown>([
-        () => request('/reports/request-download', { method: 'GET' }),
-        () => request('/reports/request-download/status', { method: 'GET' }),
-        () => request('/reports/requests/me', { method: 'GET' }),
-        () => request('/reports', { method: 'GET' }),
-        () => request('/reports/', { method: 'GET' })
-      ]);
+    const learnerIds = getCurrentLearnerIdSet();
+    const candidates: Array<() => Promise<unknown>> = [
+      () => request('/reports/requests/me', { method: 'GET' }),
+      () => request('/reports/request-download/status', { method: 'GET' }),
+      () => request('/reports/request-download/me', { method: 'GET' }),
+      () => request('/report-requests/me', { method: 'GET' }),
+      () => request('/reports/request-download', { method: 'GET' }),
+      () => request('/reports/requests', { method: 'GET' }),
+      () => request('/reports', { method: 'GET' }),
+      () => request('/report-requests', { method: 'GET' }),
+      () => request('/reports/', { method: 'GET' })
+    ];
 
-      return extractSingleRequest(response);
-    } catch (error) {
-      if (isNotFound(error)) return null;
-      throw error;
+    let lastError: unknown = null;
+
+    for (const candidate of candidates) {
+      try {
+        const response = await candidate();
+        const parsed = extractLearnerScopedRequest(response, learnerIds);
+        if (parsed) return parsed;
+      } catch (error) {
+        lastError = error;
+        if (!isFallbackError(error)) {
+          throw error;
+        }
+      }
     }
+
+    if (lastError && !isFallbackError(lastError)) {
+      throw lastError;
+    }
+
+    return null;
   },
 
   listRequests: async (filters: ReportRequestFilters = {}): Promise<ReportRequest[]> => {
     const query = stringifyQuery(filters);
     const response = await tryFallback<unknown>([
+      () => request(`/reports/requests${query}`),
+      () => request(`/report-requests${query}`),
       () => request(`/reports${query}`),
       () => request(`/reports/${query ? `?${query.slice(1)}` : ''}`),
-      () => request(`/reports/requests${query}`),
       () => request(`/reports/request-download/requests${query}`),
       () => request(`/reports/request-download${query ? `${query}&scope=all` : '?scope=all'}`)
     ]);
 
-    return getRequestList(response);
+    return applyFilters(getRequestList(response), filters);
+  },
+
+  listAdminRequests: async (filters: ReportRequestFilters = {}): Promise<ReportRequest[]> => {
+    const query = stringifyQuery(filters);
+    const response = await tryFallback<unknown>([
+      () => request(`/reports/requests${query}`),
+      () => request(`/report-requests${query}`),
+      () => request(`/admin/reports${query}`),
+      () => request(`/reports/request-download/requests${query}`),
+      () => request(`/reports/admin/requests${query}`),
+      () => request(`/reports/admin/report-requests${query}`),
+      () => request(`/reports/request-download${query ? `${query}&scope=all` : '?scope=all'}`),
+      () => request(`/reports${query ? `${query}&scope=all` : '?scope=all'}`)
+    ]);
+
+    return applyFilters(getRequestList(response), filters);
   },
 
   decideRequest: async (requestId: string, decision: ReportDecision): Promise<ReportRequest> => {
     const payload = { status: decision };
+    const isApprove = decision === 'APPROVED';
     const response = await tryFallback<unknown>([
+      () => request(`/admin/reports/${requestId}/${isApprove ? 'approve' : 'reject'}`, { method: 'PATCH', json: payload }),
+      () => request(`/admin/reports/${requestId}/${isApprove ? 'approve' : 'reject'}`, { method: 'PATCH' }),
+      () => request(`/admin/reports/${requestId}/${isApprove ? 'approve' : 'reject'}/`, { method: 'PATCH', json: payload }),
+      () => request(`/admin/reports/${requestId}/${isApprove ? 'approve' : 'reject'}/`, { method: 'PATCH' }),
+      () => request(`/admin/reports/${requestId}/${isApprove ? 'approve' : 'reject'}-request`, { method: 'PATCH', json: payload }),
+      () => request(`/admin/reports/${requestId}/${isApprove ? 'approve' : 'reject'}-request`, { method: 'PATCH' }),
       () => request(`/reports/${requestId}/decision`, { method: 'PATCH', json: payload }),
       () => request(`/reports/${requestId}`, { method: 'PATCH', json: payload }),
       () => request('/reports', { method: 'PATCH', json: { requestId, ...payload } }),
@@ -181,10 +301,24 @@ export const reportService = {
       () => request('/reports/request-download', { method: 'PATCH', json: { requestId, ...payload } })
     ]);
 
-    return normalizeReportRequest(pickRequestLikeObject(response));
+    const normalized = normalizeReportRequest(pickRequestLikeObject(response));
+    if (normalized.id || normalized.studentId) return normalized;
+    return {
+      id: requestId,
+      studentId: '',
+      studentName: 'Unknown Learner',
+      courseId: '',
+      courseName: 'General Course',
+      status: decision,
+      approvedBy: null,
+      approvedByName: null,
+      approvedByRole: null,
+      createdAt: null,
+      updatedAt: new Date().toISOString()
+    };
   },
 
-  downloadApprovedReport: async (params: { requestId?: string; courseId?: string } = {}): Promise<DownloadReportResult> => {
+  downloadApprovedReport: async (params: { requestId?: string; courseId?: string; quizId?: string } = {}): Promise<DownloadReportResult> => {
     const token = getToken();
     const headers = new Headers();
     if (token) headers.set('Authorization', `Bearer ${token}`);
@@ -192,15 +326,16 @@ export const reportService = {
     const query = new URLSearchParams();
     if (params.requestId) query.set('requestId', params.requestId);
     if (params.courseId) query.set('courseId', params.courseId);
+    if (params.quizId) query.set('quizId', params.quizId);
 
     const queryString = query.toString() ? `?${query.toString()}` : '';
     const withSlashQueryString = queryString ? `/?${query.toString()}` : '/';
     const candidates = [
+      `${baseUrl}/reports/download${queryString}`,
       `${baseUrl}/reports/`,
       `${baseUrl}/reports`,
       `${baseUrl}/reports${queryString}`,
-      `${baseUrl}/reports${withSlashQueryString}`,
-      `${baseUrl}/reports/download${queryString}`
+      `${baseUrl}/reports${withSlashQueryString}`
     ];
 
     let lastError: unknown = null;

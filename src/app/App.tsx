@@ -1,10 +1,27 @@
+import { useEffect } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
+import { api } from '../shared/utils/api';
 import { useLucide } from '../shared/hooks/useLucide';
 import { appRoutes } from './routes';
+import { clearAuth, getToken } from '../features/auth/utils/auth.storage';
 
 
 function App() {
   useLucide();
+
+  useEffect(() => {
+    const token = getToken();
+    if (!token) return;
+
+    api.auth.me().catch((error: unknown) => {
+      const status = typeof error === 'object' && error !== null && 'status' in error
+        ? Number((error as { status?: number }).status)
+        : null;
+      if (status === 401 || status === 403) {
+        clearAuth();
+      }
+    });
+  }, []);
 
   return (
     <Routes>

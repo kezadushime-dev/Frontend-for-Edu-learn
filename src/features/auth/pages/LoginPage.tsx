@@ -1,9 +1,15 @@
-﻿import { type FormEvent, useState } from 'react';
+import { type FormEvent, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Footer, PrimaryNav, TopBar } from '../../../core/layout/LayoutPieces';
 import { api } from '../../../shared/utils/api';
 import { useToast } from '../../../shared/hooks/useToast';
-import { clearAuth } from '../utils/auth.storage';
+import { clearAuth, getToken, getUser } from '../utils/auth.storage';
+
+const dashboardByRole: Record<string, string> = {
+  admin: '/dashboard-admin',
+  instructor: '/dashboard-manager',
+  learner: '/dashboard-learner'
+};
 
 export default function Login() {
   const navigate = useNavigate();
@@ -11,6 +17,31 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const token = getToken();
+    if (!token) return;
+
+    const cached = getUser();
+    if (cached?.role) {
+      const redirect = dashboardByRole[cached.role] || '/dashboard-learner';
+      navigate(redirect, { replace: true });
+      return;
+    }
+
+    api.auth.me().then((user) => {
+      const role = user?.role || 'learner';
+      const redirect = dashboardByRole[role] || '/dashboard-learner';
+      navigate(redirect, { replace: true });
+    }).catch((error: unknown) => {
+      const status = typeof error === 'object' && error !== null && 'status' in error
+        ? Number((error as { status?: number }).status)
+        : null;
+      if (status === 401 || status === 403) {
+        clearAuth();
+      }
+    });
+  }, [navigate]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -20,8 +51,7 @@ export default function Login() {
       const user = await api.auth.login(email.trim().toLowerCase(), password);
       toast.success('Login successful. Redirecting...');
       const role = user.role || 'learner';
-      const redirect =
-        role === 'admin' ? '/dashboard-admin' : role === 'instructor' ? '/dashboard-manager' : '/dashboard-learner';
+      const redirect = dashboardByRole[role] || '/dashboard-learner';
       window.setTimeout(() => {
         navigate(redirect);
       }, 500);
@@ -101,6 +131,7 @@ export default function Login() {
     </div>
   );
 }
+
 
 
 
