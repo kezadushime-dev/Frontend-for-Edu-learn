@@ -56,7 +56,6 @@ export default function ReportRequestTable({
                 <tr key={row.id || `${row.studentId}-${row.createdAt || row.updatedAt}`} className="border-b border-gray-100">
                   <td className="px-4 py-4">
                     <p className="font-semibold text-gray-900">{row.studentName}</p>
-                    <p className="text-xs text-gray-500">{row.studentId || 'Learner ID unavailable'}</p>
                   </td>
                   <td className="px-4 py-4">
                     <p className="font-medium text-gray-800">{row.courseName}</p>
