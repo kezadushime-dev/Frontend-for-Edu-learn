@@ -1,7 +1,15 @@
-﻿import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { PrimaryNav, TopBar } from '../../../core/layout/LayoutPieces';
+import { TopBar } from '../../../core/layout/LayoutPieces';
 import { Sidebar } from '../../../core/layout/Sidebars';
+import {
+  AssignmentPanel,
+  CalendarWidget,
+  StatusBreakdownChart,
+  TrendChart,
+  type AssignmentItem,
+  type TrendPoint
+} from '../../../components/dashboard/OverviewWidgets';
 import { uiStore } from '../../../shared/data/uiStore';
 import { api } from '../../../shared/utils/api';
 
@@ -9,19 +17,18 @@ type LessonItem = {
   _id?: string;
   id?: string;
   title?: string;
-  category?: string;
-  createdBy?: string;
   createdAt?: string;
   updatedAt?: string;
-  instructor?: { name?: string };
+  isPublished?: boolean;
 };
 
 type QuizItem = {
   _id?: string;
   id?: string;
   title?: string;
-  passingScore?: number;
   createdAt?: string;
+  updatedAt?: string;
+  isActive?: boolean;
 };
 
 type AnalyticsItem = {
@@ -29,10 +36,26 @@ type AnalyticsItem = {
   passed?: number;
 };
 
-const formatDate = (value?: string) => {
-  if (!value) return 'N/A';
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? 'N/A' : date.toLocaleDateString();
+const metricDisplay = (value: number) => {
+  if (value >= 1000) return `${(value / 1000).toFixed(1)}k+`;
+  return `${value}+`;
+};
+
+const recentMonths = (count: number) => {
+  const now = new Date();
+  return Array.from({ length: count }, (_, index) => {
+    const date = new Date(now.getFullYear(), now.getMonth() - (count - 1 - index), 1);
+    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    const label = date.toLocaleDateString(undefined, { month: 'short' });
+    return { key, label };
+  });
+};
+
+const monthKeyFromDate = (value: unknown) => {
+  if (!value) return null;
+  const parsed = new Date(String(value));
+  if (Number.isNaN(parsed.getTime())) return null;
+  return `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, '0')}`;
 };
 
 export default function ManagerDashboardPage() {
@@ -74,247 +97,275 @@ export default function ManagerDashboardPage() {
     };
   }, []);
 
-  const refreshData = async () => {
-    const [lessonsRes, quizzesRes, analyticsRes] = await Promise.all([
-      api.lessons.list(),
-      api.quizzes.list(),
-      api.quizzes.analytics().catch(() => ({ data: { analytics: [] } }))
-    ]);
-
-    setLessons((lessonsRes.data.lessons || []) as LessonItem[]);
-    setQuizzes((quizzesRes.data.quizzes || []) as QuizItem[]);
-    setAnalytics((analyticsRes.data.analytics || []) as AnalyticsItem[]);
-  };
-
-  const handleDeleteLesson = async (id: string) => {
-    if (!window.confirm('Delete this lesson?')) return;
-
-    try {
-      await api.lessons.delete(id);
-      await refreshData();
-    } catch {
-      alert('Failed to delete lesson');
-    }
-  };
-
-  const handleDeleteQuiz = async (id: string) => {
-    if (!window.confirm('Delete this quiz?')) return;
-
-    try {
-      await api.quizzes.delete(id);
-      await refreshData();
-    } catch {
-      alert('Failed to delete quiz');
-    }
-  };
-
   const quizStats = useMemo(() => {
-    if (!analytics.length) return { passRate: 0, attempts: 0 };
-
-    const totalAttempts = analytics.reduce((sum, item) => sum + (item.attempts || 0), 0);
-    if (!totalAttempts) return { passRate: 0, attempts: 0 };
-
-    const totalPassed = analytics.reduce((sum, item) => sum + (item.passed || 0), 0);
-    return { passRate: Math.round((totalPassed / totalAttempts) * 100), attempts: totalAttempts };
+    if (!analytics.length) return { passRate: 0, attempts: 0, passed: 0 };
+    const attempts = analytics.reduce((sum, item) => sum + (item.attempts || 0), 0);
+    const passed = analytics.reduce((sum, item) => sum + (item.passed || 0), 0);
+    const passRate = attempts ? Math.round((passed / attempts) * 100) : 0;
+    return { passRate, attempts, passed };
   }, [analytics]);
 
-  const lessonCount = lessons.length;
-  const quizCount = quizzes.length;
-  const learnerCount = 0;
-  const activeCohorts = Math.max(1, Math.ceil(learnerCount / 5));
+  const monthRange = useMemo(() => recentMonths(6), []);
+  const trendPoints = useMemo<TrendPoint[]>(() => {
+    const lessonMap = new Map<string, number>();
+    const quizMap = new Map<string, number>();
+
+    lessons.forEach((lesson) => {
+      const key = monthKeyFromDate(lesson.createdAt || lesson.updatedAt);
+      if (!key) return;
+      lessonMap.set(key, (lessonMap.get(key) || 0) + 1);
+    });
+    quizzes.forEach((quiz) => {
+      const key = monthKeyFromDate(quiz.createdAt || quiz.updatedAt);
+      if (!key) return;
+      quizMap.set(key, (quizMap.get(key) || 0) + 1);
+    });
+
+    return monthRange.map((month) => ({
+      label: month.label,
+      study: (lessonMap.get(month.key) || 0) * 2,
+      test: (quizMap.get(month.key) || 0) * 2
+    }));
+  }, [lessons, quizzes, monthRange]);
+
+  const publishedLessons = lessons.filter((item) => item.isPublished !== false).length;
+  const draftLessons = lessons.filter((item) => item.isPublished === false).length;
+  const activeQuizzes = quizzes.filter((item) => item.isActive !== false).length;
+  const pausedQuizzes = quizzes.filter((item) => item.isActive === false).length;
+  const supportSignals = quizStats.attempts + activeQuizzes;
+
+  const highlightedDays = useMemo(() => {
+    const days = new Set<number>();
+    lessons.slice(0, 3).forEach((item) => {
+      const value = new Date(item.createdAt || item.updatedAt || Date.now()).getDate();
+      days.add(value);
+    });
+    quizzes.slice(0, 3).forEach((item) => {
+      const value = new Date(item.createdAt || item.updatedAt || Date.now()).getDate();
+      days.add(value);
+    });
+    return Array.from(days).slice(0, 5);
+  }, [lessons, quizzes]);
+
+  const assignmentItems = useMemo<AssignmentItem[]>(() => {
+    const dynamicItems: AssignmentItem[] = [
+      {
+        title: draftLessons ? `Publish ${draftLessons} draft lesson(s)` : 'Validate lesson quality checks',
+        dueIn: draftLessons ? '2 days' : '5 days',
+        note: 'Ensure each lesson has clear outcomes and assets.'
+      },
+      {
+        title: `${quizzes.filter((item) => item.isActive === false).length} paused quiz(es) need attention`,
+        dueIn: '4 days',
+        note: 'Update scoring and reactivate assessments.'
+      }
+    ];
+
+    uiStore.manager.tasks.slice(0, 1).forEach((task) => {
+      dynamicItems.push({
+        title: task,
+        dueIn: '9 days',
+        note: 'Manager follow-up milestone.'
+      });
+    });
+
+    return dynamicItems;
+  }, [draftLessons, quizzes]);
+
+  const lessonRows = lessons.slice(0, 8).map((lesson) => ({
+    id: lesson._id || lesson.id || '',
+    title: lesson.title || 'N/A',
+    status: lesson.isPublished === false ? 'Draft' : 'Published'
+  }));
+
+  const quizRows = quizzes.slice(0, 8).map((quiz) => ({
+    id: quiz._id || quiz.id || '',
+    title: quiz.title || 'N/A',
+    status: quiz.isActive === false ? 'Paused' : 'Active'
+  }));
 
   return (
-    <div className="bg-[#f5f8ff] text-slate-800">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-[#eef4ff] to-[#f8fbff] text-slate-800">
       <TopBar />
-      <PrimaryNav
-        variant="dashboard"
-        items={[
-          { label: 'Home', to: '/' },
-          { label: 'Report Requests', to: '/instructor/report-requests' }
-        ]}
-      />
-
-      <section className="pt-32 pb-20">
-        <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-[260px_1fr] gap-8">
+      <section className="pb-16 pt-24">
+        <div className="mx-auto grid max-w-7xl gap-8 px-6 lg:grid-cols-[260px_1fr]">
           <Sidebar
-            title="Manager"
+            title="Manager Console"
             links={[
-              { label: 'Overview', active: true },
-              { label: 'Manage Lessons', to: '/instructor/lessons' },
-              { label: 'Create Lesson', to: '/instructor/lesson-create' },
-              { label: 'Manage Quizzes', to: '/instructor/quizzes' },
-              { label: 'Create Quiz', to: '/instructor/quiz-create' },
+              { label: 'Dashboard', active: true },
+              { label: 'Lessons', to: '/instructor/lessons' },
+              { label: 'Quizzes', to: '/instructor/quizzes' },
               { label: 'Report Requests', to: '/instructor/report-requests' },
-              { label: 'Logout', to: '/login' }
+              { label: 'Profile Settings', to: '/instructor/profile-settings' }
             ]}
           />
 
           <div className="animate-fadeInUp">
-            <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-8">
-              <div>
-                <p className="text-primary uppercase font-semibold tracking-wider">Dashboard</p>
-                <h1 className="text-4xl font-extrabold gradient-text">Manager Overview</h1>
-                <p className="text-gray-600 mt-2">Track cohorts, learner progress, and lesson quality.</p>
-              </div>
-            </div>
-
-            {error ? <p className="text-red-600 text-sm mb-6">{error}</p> : null}
-            {loading ? <p className="text-gray-500 text-sm mb-6">Loading dashboard...</p> : null}
-
-            <div className="grid md:grid-cols-4 gap-6">
-              <div className="bg-white rounded-xl p-6 shadow-lg hover-lift">
-                <p className="text-sm text-gray-500">Active Cohorts</p>
-                <h3 className="text-3xl font-bold mt-2">{activeCohorts}</h3>
-                <p className="text-xs text-gray-500 mt-2">From /admin/statistics</p>
-              </div>
-              <div className="bg-white rounded-xl p-6 shadow-lg hover-lift">
-                <p className="text-sm text-gray-500">Lesson Reviews</p>
-                <h3 className="text-3xl font-bold mt-2">{lessonCount}</h3>
-                <p className="text-xs text-gray-500 mt-2">From /lessons</p>
-              </div>
-              <div className="bg-white rounded-xl p-6 shadow-lg hover-lift">
-                <p className="text-sm text-gray-500">Quiz Pass Rate</p>
-                <h3 className="text-3xl font-bold mt-2">{quizStats.passRate}%</h3>
-                <p className="text-xs text-gray-500 mt-2">From /quizzes/analytics</p>
-              </div>
-              <div className="bg-white rounded-xl p-6 shadow-lg hover-lift">
-                <p className="text-sm text-gray-500">Feedback Items</p>
-                <h3 className="text-3xl font-bold mt-2">{quizStats.attempts}</h3>
-                <p className="text-xs text-gray-500 mt-2">From /quizzes</p>
-              </div>
-            </div>
-
-            <div className="grid lg:grid-cols-2 gap-6 mt-8">
-              <div className="bg-white rounded-xl p-6 shadow-lg">
-                <h3 className="text-xl font-bold mb-4">Cohort Performance</h3>
-                <div className="grid gap-3 text-sm">
-                  {uiStore.manager.performance.map((item) => (
-                    <div key={item.label} className="flex items-center justify-between">
-                      <span>{item.label}</span>
-                      <span className="text-gray-500">{item.value}</span>
-                    </div>
-                  ))}
+            <div className="mb-8 rounded-3xl border border-slate-200/80 bg-white/95 p-6 shadow-[0_18px_36px_-20px_rgba(15,23,42,0.45)]">
+              <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-600">Manager Dashboard</p>
+                  <h1 className="mt-2 text-4xl font-black text-slate-800">Learning Operations Overview</h1>
+                  <p className="mt-2 text-slate-600">Monitor lesson quality, quiz performance, and learner engagement in one place.</p>
+                </div>
+                <div className="flex flex-wrap gap-3">
+                  <Link
+                    to="/instructor/lesson-create"
+                    className="rounded-xl bg-blue-600 px-5 py-2 font-semibold text-white shadow-sm transition hover:bg-blue-700"
+                  >
+                    Create Lesson
+                  </Link>
+                  <Link
+                    to="/instructor/quiz-create"
+                    className="rounded-xl border border-blue-200 bg-blue-50 px-5 py-2 font-semibold text-blue-700 transition hover:bg-blue-100"
+                  >
+                    Create Quiz
+                  </Link>
                 </div>
               </div>
-              <div className="bg-white rounded-xl p-6 shadow-lg">
-                <h3 className="text-xl font-bold mb-4">Tasks</h3>
-                <ul className="space-y-3 text-sm text-gray-600">
-                  {uiStore.manager.tasks.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
+
+              {error ? <p className="mt-4 text-sm text-rose-600">{error}</p> : null}
+              {loading ? <p className="mt-4 text-sm text-slate-500">Loading manager insights...</p> : null}
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              <StatCard label="Completed Courses" value={metricDisplay(publishedLessons)} note="Published learning paths" />
+              <StatCard label="Courses in Progress" value={metricDisplay(draftLessons)} note="Draft lessons requiring review" />
+              <StatCard label="Quiz Pass Rate" value={`${quizStats.passRate}%`} note="From live assessment analytics" />
+              <StatCard label="Community Support" value={metricDisplay(supportSignals)} note="Attempts and active quizzes" />
+            </div>
+
+            <div className="mt-6 grid gap-6 xl:grid-cols-[1.7fr_1fr]">
+              <div className="grid gap-6">
+                <TrendChart
+                  title="Study vs Test Hours"
+                  subtitle="Estimated from lesson creation volume and quiz activity."
+                  points={trendPoints}
+                />
+                <StatusBreakdownChart
+                  title="Course and Quiz Status"
+                  subtitle="Published/active readiness across manager content."
+                  items={[
+                    { label: 'Published Lessons', value: publishedLessons, tone: 'emerald' },
+                    { label: 'Draft Lessons', value: draftLessons, tone: 'amber' },
+                    { label: 'Active Quizzes', value: activeQuizzes, tone: 'blue' },
+                    { label: 'Paused Quizzes', value: pausedQuizzes, tone: 'slate' }
+                  ]}
+                />
+              </div>
+              <div className="grid gap-6">
+                <CalendarWidget highlightedDays={highlightedDays} />
+                <AssignmentPanel title="Manager Priorities" items={assignmentItems} />
               </div>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-6 mt-8">
-              <div className="bg-white rounded-xl p-6 shadow-lg">
-                <p className="text-sm text-gray-500">Total Quizzes</p>
-                <h3 className="text-3xl font-bold mt-2">{quizCount}</h3>
-                <p className="text-xs text-gray-500 mt-2">From /quizzes</p>
-              </div>
-              <div className="bg-white rounded-xl p-6 shadow-lg">
-                <p className="text-sm text-gray-500">Learners</p>
-                <h3 className="text-3xl font-bold mt-2">{learnerCount}</h3>
-                <p className="text-xs text-gray-500 mt-2">From /admin/statistics</p>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl p-6 shadow-lg mt-8">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-bold">Lessons</h3>
-                <Link to="/instructor/lesson-create" className="bg-primary text-white px-4 py-2 rounded-md text-sm font-semibold">
-                  Create Lesson
-                </Link>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-4 py-3 text-left font-semibold">Title</th>
-                      <th className="px-4 py-3 text-left font-semibold">Category</th>
-                      <th className="px-4 py-3 text-left font-semibold">Created By</th>
-                      <th className="px-4 py-3 text-left font-semibold">Date</th>
-                      <th className="px-4 py-3 text-left font-semibold">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {lessons.length === 0 ? (
+            <div className="mt-8 grid gap-6 xl:grid-cols-2">
+              <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white/95 shadow-[0_14px_30px_-18px_rgba(15,23,42,0.45)]">
+                <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+                  <h3 className="font-bold text-slate-800">Courses</h3>
+                  <span className="text-xs font-semibold text-slate-500">{lessons.length}</span>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500">
                       <tr>
-                        <td colSpan={5} className="px-4 py-6 text-center text-gray-500">No lessons found</td>
+                        <th className="px-4 py-3 text-left">Lesson</th>
+                        <th className="px-4 py-3 text-left">Status</th>
                       </tr>
-                    ) : (
-                      lessons.map((lesson, index) => {
-                        const lessonId = lesson._id || lesson.id || '';
-                        return (
-                          <tr key={lessonId || String(index)} className="shadow-sm hover:shadow-md">
-                            <td className="px-4 py-3">{lesson.title || 'N/A'}</td>
-                            <td className="px-4 py-3">{lesson.category || 'N/A'}</td>
-                            <td className="px-4 py-3">{lesson.createdBy || lesson.instructor?.name || 'N/A'}</td>
-                            <td className="px-4 py-3">{formatDate(lesson.createdAt || lesson.updatedAt)}</td>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {lessonRows.length ? (
+                        lessonRows.map((lesson, index) => (
+                          <tr key={`${lesson.id || lesson.title}-${index}`} className="hover:bg-slate-50">
+                            <td className="px-4 py-3 font-medium text-slate-700">{lesson.title}</td>
                             <td className="px-4 py-3">
-                              <div className="flex gap-2">
-                                <Link to={`/lesson/${lessonId}`} className="text-blue-600 hover:underline">View</Link>
-                                <Link to={`/instructor/lesson-edit/${lessonId}`} className="text-green-600 hover:underline">Edit</Link>
-                                <button onClick={() => handleDeleteLesson(String(lessonId))} className="text-red-600 hover:underline">Delete</button>
-                              </div>
+                              <span
+                                className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                                  lesson.status === 'Published' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+                                }`}
+                              >
+                                {lesson.status}
+                              </span>
                             </td>
                           </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                </table>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={2} className="px-4 py-6 text-center text-slate-500">No lessons found.</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white/95 shadow-[0_14px_30px_-18px_rgba(15,23,42,0.45)]">
+                <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+                  <h3 className="font-bold text-slate-800">Assessments</h3>
+                  <span className="text-xs font-semibold text-slate-500">{quizzes.length}</span>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500">
+                      <tr>
+                        <th className="px-4 py-3 text-left">Quiz</th>
+                        <th className="px-4 py-3 text-left">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {quizRows.length ? (
+                        quizRows.map((quiz, index) => (
+                          <tr key={`${quiz.id || quiz.title}-${index}`} className="hover:bg-slate-50">
+                            <td className="px-4 py-3 font-medium text-slate-700">{quiz.title}</td>
+                            <td className="px-4 py-3">
+                              <span
+                                className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                                  quiz.status === 'Active' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-700'
+                                }`}
+                              >
+                                {quiz.status}
+                              </span>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={2} className="px-4 py-6 text-center text-slate-500">No quizzes found.</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-xl p-6 shadow-lg mt-8">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-bold">Quizzes</h3>
-                <Link to="/instructor/quiz-create" className="bg-primary text-white px-4 py-2 rounded-md text-sm font-semibold">
-                  Create Quiz
-                </Link>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-4 py-3 text-left font-semibold">Title</th>
-                      <th className="px-4 py-3 text-left font-semibold">Passing Score</th>
-                      <th className="px-4 py-3 text-left font-semibold">Created</th>
-                      <th className="px-4 py-3 text-left font-semibold">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {quizzes.length === 0 ? (
-                      <tr>
-                        <td colSpan={4} className="px-4 py-6 text-center text-gray-500">No quizzes found</td>
-                      </tr>
-                    ) : (
-                      quizzes.map((quiz, index) => {
-                        const quizId = quiz._id || quiz.id || '';
-                        return (
-                          <tr key={quizId || String(index)} className="shadow-sm hover:shadow-md">
-                            <td className="px-4 py-3">{quiz.title || 'N/A'}</td>
-                            <td className="px-4 py-3">{quiz.passingScore ?? 0}%</td>
-                            <td className="px-4 py-3">{formatDate(quiz.createdAt)}</td>
-                            <td className="px-4 py-3">
-                              <div className="flex gap-2">
-                                <Link to={`/quiz/${quizId}`} className="text-blue-600 hover:underline">View</Link>
-                                <Link to={`/instructor/quiz-edit/${quizId}`} className="text-green-600 hover:underline">Edit</Link>
-                                <button onClick={() => handleDeleteQuiz(String(quizId))} className="text-red-600 hover:underline">Delete</button>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                </table>
-              </div>
+            <div className="mt-6 grid gap-4 md:grid-cols-3">
+              <QuickMetric label="Total Lessons" value={String(lessons.length)} />
+              <QuickMetric label="Total Quizzes" value={String(quizzes.length)} />
+              <QuickMetric label="Total Attempts" value={String(quizStats.attempts)} />
             </div>
           </div>
         </div>
       </section>
+    </div>
+  );
+}
+
+function StatCard({ label, value, note }: { label: string; value: string; note: string }) {
+  return (
+    <div className="rounded-2xl border border-slate-200/80 bg-white/95 p-5 shadow-[0_12px_26px_-18px_rgba(15,23,42,0.55)]">
+      <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{label}</p>
+      <h3 className="mt-2 text-3xl font-black text-slate-800">{value}</h3>
+      <p className="mt-2 text-xs text-slate-500">{note}</p>
+    </div>
+  );
+}
+
+function QuickMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-slate-200/80 bg-white/90 px-4 py-3 shadow-sm">
+      <p className="text-xs uppercase tracking-wide text-slate-500">{label}</p>
+      <p className="mt-1 text-xl font-bold text-slate-800">{value}</p>
     </div>
   );
 }
