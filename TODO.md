@@ -1,0 +1,6 @@
+- [x] Create src/services/authService.ts with auth-related functions
+- [x] Create src/services/lessonService.ts with lesson-related functions
+- [x] Create src/services/quizService.ts with quiz-related functions
+- [x] Create src/services/adminService.ts with admin-related functions
+- [x] Update src/utils/api.ts to import from the new service files and export the api object
+- [x] Run TypeScript check to ensure no errors
