@@ -35,18 +35,29 @@ export default function LessonEdit() {
     setSaving(true);
     setError('');
     try {
-      const formDataObj = new FormData();
-      Object.entries(formData).forEach(([key, value]) => {
-        if (key === 'images' && Array.isArray(value)) {
-          value.forEach((file: any) => formDataObj.append('images', file));
-        } else {
-          formDataObj.append(key, value as string);
-        }
+      const payload = new FormData();
+      const values = formData as Record<string, unknown>;
+
+      (['title', 'description', 'content', 'category', 'order'] as const).forEach((key) => {
+        const value = values[key];
+        if (value === undefined || value === null) return;
+        const normalized = typeof value === 'string' ? value.trim() : String(value);
+        if (normalized) payload.append(key, normalized);
       });
-      await api.lessons.update(id!, formDataObj);
+
+      const images = values.images;
+      if (images instanceof FileList) {
+        Array.from(images).forEach((file) => payload.append('images', file));
+      } else if (Array.isArray(images)) {
+        images.forEach((item) => {
+          if (item instanceof File) payload.append('images', item);
+        });
+      }
+
+      await api.lessons.update(id!, payload);
       navigate('/instructor/lessons');
     } catch (err: any) {
-      setError(err?.message || 'Failed to update lesson');
+      setError(err?.message || err?.response?.data?.message || 'Failed to update lesson');
     } finally {
       setSaving(false);
     }
