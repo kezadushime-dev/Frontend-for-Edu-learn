@@ -101,6 +101,37 @@ export default function LearnerReportPage() {
     };
   }, []);
 
+  useEffect(() => {
+    let active = true;
+
+    const syncRequestStatus = async () => {
+      try {
+        const latest = await api.reports.getLearnerRequest();
+        if (!active) return;
+        if (!latest) {
+          setRequest(null);
+          return;
+        }
+        setRequest((previous) => {
+          if (!previous) return latest;
+          if (previous.id && latest.id && previous.id !== latest.id) return previous;
+          return latest;
+        });
+      } catch {
+        // Keep current UI state during polling errors.
+      }
+    };
+
+    const interval = window.setInterval(() => {
+      void syncRequestStatus();
+    }, 12000);
+
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+    };
+  }, []);
+
   const { courseId, courseName, subjects: fallbackSubjects } = useMemo(() => deriveCourseFromQuizzes(quizzes), [quizzes]);
   const subjectRows = useMemo(() => buildSubjectRows(analytics, fallbackSubjects), [analytics, fallbackSubjects]);
   const overallAverage = useMemo(() => calculateOverallAverage(subjectRows), [subjectRows]);

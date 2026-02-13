@@ -1,10 +1,18 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PrimaryNav, TopBar } from '../../../core/layout/LayoutPieces';
 import { Sidebar } from '../../../core/layout/Sidebars';
 import { uiStore } from '../../../shared/data/uiStore';
 import { api } from '../../../shared/utils/api';
 import { readJson } from '../../../shared/utils/storage';
+import {
+  buildSubjectRows,
+  calculateOverallAverage,
+  formatReportDate,
+  getPerformanceLevel
+} from '../../../shared/report/report.utils';
+import type { ReportRequest } from '../../../shared/types/report';
+import ReportStatusBadge from '../../../components/ReportStatusBadge';
 
 const getQuizState = () =>
   readJson<{ completedQuizzes?: Record<string, boolean>; scores?: Record<string, number> }>('edulearn_quizzes', {
@@ -27,6 +35,8 @@ interface Quiz {
 export default function DashboardLearner() {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+  const [analytics, setAnalytics] = useState<unknown[]>([]);
+  const [reportRequest, setReportRequest] = useState<ReportRequest | null>(null);
   const [userData, setUserData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -36,7 +46,7 @@ export default function DashboardLearner() {
   const quizState = getQuizState();
   const completedQuizzes = Object.keys(quizState.completedQuizzes || {}).length;
   const scores = Object.values(quizState.scores || {}).filter((value) => typeof value === 'number');
-  const avg = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
+  const localAverage = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
 
   useEffect(() => {
     let isMounted = true;
@@ -44,10 +54,12 @@ export default function DashboardLearner() {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
-        const [lessonsRes, quizzesRes, userRes] = await Promise.all([
+        const [lessonsRes, quizzesRes, userRes, analyticsRes, learnerRequestRes] = await Promise.all([
           api.lessons.list(),
           api.quizzes.list(),
-          api.auth.me()
+          api.auth.me(),
+          api.quizzes.analytics().catch(() => ({ data: { analytics: [] } })),
+          api.reports.getLearnerRequest().catch(() => null)
         ]);
 
         if (isMounted) {
@@ -56,6 +68,8 @@ export default function DashboardLearner() {
           setUserData(userRes || null);
           setLessonCount(lessonsRes.data.lessons.length);
           setQuizCount(quizzesRes.data.quizzes.length);
+          setAnalytics((analyticsRes as { data?: { analytics?: unknown[] } }).data?.analytics || []);
+          setReportRequest(learnerRequestRes);
           setError('');
         }
       } catch (err: any) {
@@ -71,6 +85,35 @@ export default function DashboardLearner() {
     fetchDashboardData();
     return () => { isMounted = false; };
   }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    const syncLearnerRequest = async () => {
+      try {
+        const next = await api.reports.getLearnerRequest();
+        if (!active) return;
+        setReportRequest(next);
+      } catch {
+        // Keep previous value on transient sync errors.
+      }
+    };
+
+    const interval = window.setInterval(() => {
+      void syncLearnerRequest();
+    }, 12000);
+
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+    };
+  }, []);
+
+  const reportSubjects = useMemo(() => buildSubjectRows(analytics, []), [analytics]);
+  const reportAverage = useMemo(() => calculateOverallAverage(reportSubjects), [reportSubjects]);
+  const reportLevel = useMemo(() => getPerformanceLevel(reportAverage), [reportAverage]);
+  const reportUpdatedAt = reportRequest?.updatedAt || reportRequest?.createdAt || null;
+  const reportReadyToDownload = reportRequest?.status === 'APPROVED';
 
   const totalLessons = lessons.length;
   const totalQuizzes = quizzes.length;
@@ -136,7 +179,7 @@ export default function DashboardLearner() {
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
                   <StatCard title="Lessons Available" value={lessonCount} note={uiStore.statsNotes.lessons} />
-                  <StatCard title="Quiz Average" value={`${avg}%`} note="From local quiz submissions" />
+                  <StatCard title="Quiz Average" value={`${reportAverage || localAverage}%`} note="From quiz analytics API" />
                   <StatCard title="Quizzes Completed" value={completedQuizzes} note="Tracked locally" />
                   <StatCard
                     title="My Progress"
@@ -185,9 +228,29 @@ export default function DashboardLearner() {
                     <p className="text-xs text-gray-500 mt-2">From /quizzes</p>
                   </div>
                   <div className="bg-white rounded-xl p-6 shadow-lg">
-                    <p className="text-sm text-gray-500">Next Step</p>
-                    <h3 className="text-xl font-bold mt-2">Continue a lesson or take a quiz</h3>
-                    <p className="text-xs text-gray-500 mt-2">Your report card updates from live quiz analytics.</p>
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm text-gray-500">Report Card (DB)</p>
+                      {reportRequest ? <ReportStatusBadge status={reportRequest.status} /> : <span className="text-xs text-gray-500">No Request Yet</span>}
+                    </div>
+                    <h3 className="text-xl font-bold mt-2">{reportAverage}% - {reportLevel}</h3>
+                    <p className="text-xs text-gray-500 mt-2">
+                      {reportUpdatedAt
+                        ? `Last request update: ${formatReportDate(reportUpdatedAt)}`
+                        : 'No report request found yet. Open Report Card to request download permission.'}
+                    </p>
+                    <div className="mt-4 flex gap-2">
+                      <Link
+                        to="/learner/report-card"
+                        className="border border-primary text-primary px-3 py-1 rounded text-xs font-bold hover:bg-primary hover:text-white transition"
+                      >
+                        Open Report Card
+                      </Link>
+                      {reportReadyToDownload ? (
+                        <span className="bg-emerald-50 text-emerald-700 px-3 py-1 rounded text-xs font-semibold">
+                          Ready to Download
+                        </span>
+                      ) : null}
+                    </div>
                   </div>
                 </div>
               </>

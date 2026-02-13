@@ -51,35 +51,93 @@ const pickString = (record: UnknownRecord, keys: string[]): string | null => {
   return null;
 };
 
+const buildName = (record: UnknownRecord): string | null => {
+  const direct = pickString(record, ['name', 'fullName', 'full_name', 'displayName', 'display_name']);
+  if (direct) return direct;
+
+  const first = pickString(record, ['firstName', 'first_name']) || '';
+  const last = pickString(record, ['lastName', 'last_name']) || '';
+  const full = `${first} ${last}`.trim();
+  return full || null;
+};
+
 export const normalizeReportRequest = (value: unknown): ReportRequest => {
   const record = toRecord(value);
   const student = toRecord(record.student);
   const learner = toRecord(record.learner);
   const course = toRecord(record.course);
+  const approver = toRecord(record.approver);
+  const user = toRecord(record.user);
+  const requestedBy = toRecord(record.requestedBy ?? record.requested_by);
+  const createdBy = toRecord(record.createdBy ?? record.created_by);
+  const studentFromId = toRecord(record.studentId ?? record.student_id);
+  const learnerFromId = toRecord(record.learnerId ?? record.learner_id);
+  const courseFromId = toRecord(record.courseId ?? record.course_id);
+  const lesson = toRecord(record.lesson);
+  const lessonFromId = toRecord(record.lessonId ?? record.lesson_id);
+  const quiz = toRecord(record.quiz);
+  const quizLesson = toRecord(quiz.lesson);
+  const quizCourse = toRecord(quiz.course);
 
-  const id = pickString(record, ['id', '_id', 'requestId']) || '';
+  const id = pickString(record, ['id', '_id', 'requestId', 'request_id']) || '';
   const studentId =
-    pickString(record, ['studentId']) ||
-    pickString(student, ['id', '_id']) ||
-    pickString(learner, ['id', '_id']) ||
+    pickString(record, ['studentId', 'student_id', 'learnerId', 'learner_id']) ||
+    pickString(student, ['id', '_id', 'studentId', 'student_id']) ||
+    pickString(learner, ['id', '_id', 'learnerId', 'learner_id']) ||
+    pickString(studentFromId, ['id', '_id', 'studentId', 'student_id']) ||
+    pickString(learnerFromId, ['id', '_id', 'learnerId', 'learner_id']) ||
+    pickString(user, ['id', '_id']) ||
+    pickString(requestedBy, ['id', '_id']) ||
+    pickString(createdBy, ['id', '_id']) ||
     '';
   const studentName =
-    pickString(record, ['studentName']) ||
-    pickString(student, ['name', 'fullName']) ||
-    pickString(learner, ['name', 'fullName']) ||
+    pickString(record, ['studentName', 'student_name', 'learnerName', 'learner_name']) ||
+    buildName(student) ||
+    buildName(learner) ||
+    buildName(studentFromId) ||
+    buildName(learnerFromId) ||
+    buildName(user) ||
+    buildName(requestedBy) ||
+    buildName(createdBy) ||
+    studentId ||
     'Unknown Learner';
   const courseId =
-    pickString(record, ['courseId']) || pickString(course, ['id', '_id']) || pickString(record, ['lessonId']) || '';
+    pickString(record, ['courseId', 'course_id']) ||
+    pickString(course, ['id', '_id', 'courseId', 'course_id']) ||
+    pickString(courseFromId, ['id', '_id', 'courseId', 'course_id']) ||
+    pickString(record, ['lessonId', 'lesson_id']) ||
+    pickString(lesson, ['id', '_id', 'lessonId', 'lesson_id']) ||
+    pickString(lessonFromId, ['id', '_id', 'lessonId', 'lesson_id']) ||
+    pickString(quizLesson, ['id', '_id', 'lessonId', 'lesson_id']) ||
+    pickString(quizCourse, ['id', '_id', 'courseId', 'course_id']) ||
+    '';
   const courseName =
-    pickString(record, ['courseName']) ||
-    pickString(course, ['name', 'title']) ||
-    pickString(record, ['lessonTitle']) ||
+    pickString(record, ['courseName', 'course_name']) ||
+    pickString(course, ['name', 'title', 'courseName', 'course_name']) ||
+    pickString(courseFromId, ['name', 'title', 'courseName', 'course_name']) ||
+    pickString(record, ['lessonTitle', 'lesson_title']) ||
+    pickString(lesson, ['name', 'title', 'lessonTitle', 'lesson_title']) ||
+    pickString(lessonFromId, ['name', 'title', 'lessonTitle', 'lesson_title']) ||
+    pickString(quizLesson, ['name', 'title', 'lessonTitle', 'lesson_title']) ||
+    pickString(quizCourse, ['name', 'title', 'courseName', 'course_name']) ||
+    pickString(quiz, ['title', 'quizTitle', 'quiz_title']) ||
+    courseId ||
     'General Course';
-  const approvedBy = pickString(record, ['approvedBy', 'actionBy']);
-  const approvedByName = pickString(record, ['approvedByName', 'actionByName', 'reviewedByName']);
-  const approvedByRole = normalizeApproverRole(record.approvedByRole ?? record.actionByRole ?? record.reviewedByRole);
-  const createdAt = pickString(record, ['createdAt', 'requestedAt']);
-  const updatedAt = pickString(record, ['updatedAt', 'reviewedAt']);
+  const approvedBy = pickString(record, ['approvedBy', 'approved_by', 'actionBy', 'action_by']) || pickString(approver, ['id', '_id']);
+  const approvedByName =
+    pickString(record, ['approvedByName', 'approved_by_name', 'actionByName', 'action_by_name', 'reviewedByName', 'reviewed_by_name']) ||
+    pickString(approver, ['name', 'fullName', 'full_name']);
+  const approvedByRole = normalizeApproverRole(
+    record.approvedByRole ??
+      record.approved_by_role ??
+      record.actionByRole ??
+      record.action_by_role ??
+      record.reviewedByRole ??
+      record.reviewed_by_role ??
+      approver.role
+  );
+  const createdAt = pickString(record, ['createdAt', 'created_at', 'requestedAt', 'requested_at']);
+  const updatedAt = pickString(record, ['updatedAt', 'updated_at', 'reviewedAt', 'reviewed_at']);
 
   return {
     id,

@@ -57,7 +57,24 @@ export default function InstructorReportRequestsPage() {
     setError('');
     try {
       const updated = await api.reports.decideRequest(requestId, status);
-      setRows((previous) => sortByDate(previous.map((item) => (item.id === requestId ? updated : item))));
+      const nowIso = new Date().toISOString();
+      setRows((previous) =>
+        sortByDate(
+          previous.map((item) => {
+            if (item.id !== requestId) return item;
+
+            return {
+              ...item,
+              status: updated.status === 'PENDING' ? status : updated.status,
+              approvedBy: updated.approvedBy ?? item.approvedBy,
+              approvedByName: updated.approvedByName ?? item.approvedByName,
+              approvedByRole: updated.approvedByRole ?? item.approvedByRole,
+              updatedAt: updated.updatedAt || nowIso,
+              createdAt: updated.createdAt || item.createdAt
+            };
+          })
+        )
+      );
       setLastSynced(new Date().toLocaleTimeString());
     } catch (actionError: unknown) {
       setError(actionError instanceof Error ? actionError.message : 'Failed to update request status.');
