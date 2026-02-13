@@ -40,6 +40,15 @@ export function AdminFormFields({ fields, values = {}, onChange }: AdminFormFiel
                 </option>
               ))}
             </select>
+          ) : field.type === 'file' ? (
+            <input
+              type="file"
+              name={field.key}
+              onChange={(e) => onChange?.(field.key, e.target.files)}
+              multiple={field.key === 'images'}
+              accept={field.key === 'images' ? 'image/*' : undefined}
+              className="p-3 text-gray-800 rounded-md border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/40"
+            />
           ) : (
             <input
               type={field.type || 'text'}

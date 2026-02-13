@@ -51,9 +51,11 @@ const getRequestList = (payload: unknown): ReportRequest[] => {
   const body = toRecord(payload);
   const data = toRecord(body.data);
   const candidates = [
+    data.reports,
     data.requests,
     data.reportRequests,
     data.items,
+    body.reports,
     body.requests,
     body.reportRequests,
     body.items,
@@ -66,6 +68,25 @@ const getRequestList = (payload: unknown): ReportRequest[] => {
   }
 
   return [];
+};
+
+const getMostRecentRequest = (items: ReportRequest[]): ReportRequest | null => {
+  if (!items.length) return null;
+  return [...items]
+    .sort((a, b) => {
+      const aDate = new Date(a.updatedAt || a.createdAt || 0).getTime();
+      const bDate = new Date(b.updatedAt || b.createdAt || 0).getTime();
+      return bDate - aDate;
+    })
+    .at(0) || null;
+};
+
+const extractSingleRequest = (payload: unknown): ReportRequest | null => {
+  const fromList = getMostRecentRequest(getRequestList(payload));
+  if (fromList) return fromList;
+
+  const requestLike = normalizeReportRequest(pickRequestLikeObject(payload));
+  return requestLike.id || requestLike.studentId ? requestLike : null;
 };
 
 const stringifyQuery = (filters: ReportRequestFilters): string => {
@@ -109,11 +130,12 @@ const parseFileName = (contentDisposition: string | null): string | null => {
 
 export const reportService = {
   requestDownload: async (input: RequestDownloadInput = {}): Promise<ReportRequest> => {
-    const response = await request<unknown>('/reports/request-download', {
-      method: 'PATCH',
-      json: input
-    });
-    return normalizeReportRequest(pickRequestLikeObject(response));
+    const response = await tryFallback<unknown>([
+      () => request('/reports', { method: 'PATCH', json: input }),
+      () => request('/reports/', { method: 'PATCH', json: input }),
+      () => request('/reports/request-download', { method: 'PATCH', json: input })
+    ]);
+    return normalizeReportRequest(extractSingleRequest(response) || pickRequestLikeObject(response));
   },
 
   getLearnerRequest: async (): Promise<ReportRequest | null> => {
@@ -121,11 +143,12 @@ export const reportService = {
       const response = await tryFallback<unknown>([
         () => request('/reports/request-download', { method: 'GET' }),
         () => request('/reports/request-download/status', { method: 'GET' }),
-        () => request('/reports/requests/me', { method: 'GET' })
+        () => request('/reports/requests/me', { method: 'GET' }),
+        () => request('/reports', { method: 'GET' }),
+        () => request('/reports/', { method: 'GET' })
       ]);
 
-      const requestLike = normalizeReportRequest(pickRequestLikeObject(response));
-      return requestLike.id || requestLike.studentId ? requestLike : null;
+      return extractSingleRequest(response);
     } catch (error) {
       if (isNotFound(error)) return null;
       throw error;
@@ -135,6 +158,8 @@ export const reportService = {
   listRequests: async (filters: ReportRequestFilters = {}): Promise<ReportRequest[]> => {
     const query = stringifyQuery(filters);
     const response = await tryFallback<unknown>([
+      () => request(`/reports${query}`),
+      () => request(`/reports/${query ? `?${query.slice(1)}` : ''}`),
       () => request(`/reports/requests${query}`),
       () => request(`/reports/request-download/requests${query}`),
       () => request(`/reports/request-download${query ? `${query}&scope=all` : '?scope=all'}`)
@@ -146,6 +171,10 @@ export const reportService = {
   decideRequest: async (requestId: string, decision: ReportDecision): Promise<ReportRequest> => {
     const payload = { status: decision };
     const response = await tryFallback<unknown>([
+      () => request(`/reports/${requestId}/decision`, { method: 'PATCH', json: payload }),
+      () => request(`/reports/${requestId}`, { method: 'PATCH', json: payload }),
+      () => request('/reports', { method: 'PATCH', json: { requestId, ...payload } }),
+      () => request('/reports/', { method: 'PATCH', json: { requestId, ...payload } }),
       () => request(`/reports/requests/${requestId}/decision`, { method: 'PATCH', json: payload }),
       () => request(`/reports/requests/${requestId}`, { method: 'PATCH', json: payload }),
       () => request(`/reports/request-download/${requestId}`, { method: 'PATCH', json: payload }),
@@ -164,39 +193,70 @@ export const reportService = {
     if (params.requestId) query.set('requestId', params.requestId);
     if (params.courseId) query.set('courseId', params.courseId);
 
-    const response = await fetch(`${baseUrl}/reports/download${query.toString() ? `?${query}` : ''}`, {
-      method: 'GET',
-      headers
-    });
+    const queryString = query.toString() ? `?${query.toString()}` : '';
+    const withSlashQueryString = queryString ? `/?${query.toString()}` : '/';
+    const candidates = [
+      `${baseUrl}/reports/`,
+      `${baseUrl}/reports`,
+      `${baseUrl}/reports${queryString}`,
+      `${baseUrl}/reports${withSlashQueryString}`,
+      `${baseUrl}/reports/download${queryString}`
+    ];
 
-    if (!response.ok) {
-      const contentType = response.headers.get('content-type') || '';
-      const asJson = contentType.includes('application/json')
-        ? await response.json().catch(() => ({}))
-        : null;
-      const message =
-        (asJson && toRecord(asJson).message && String(toRecord(asJson).message)) ||
-        (asJson && toRecord(asJson).error && String(toRecord(asJson).error)) ||
-        'Unable to download report.';
-      throw new ApiError(response.status, message);
-    }
+    let lastError: unknown = null;
 
-    const contentType = response.headers.get('content-type') || '';
-    const fileName =
-      parseFileName(response.headers.get('content-disposition')) || `edulearn-report-${Date.now()}.pdf`;
+    for (const url of candidates) {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers
+      });
 
-    if (contentType.includes('application/json')) {
-      const body = await response.json().catch(() => ({}));
-      const data = toRecord(toRecord(body).data);
-      const url = (data.url || data.downloadUrl || toRecord(body).url) as string | undefined;
-      if (typeof url === 'string' && url.length) {
-        return { type: 'url', url, fileName };
+      if (!response.ok) {
+        const contentType = response.headers.get('content-type') || '';
+        const asJson = contentType.includes('application/json')
+          ? await response.json().catch(() => ({}))
+          : null;
+        const message =
+          (asJson && toRecord(asJson).message && String(toRecord(asJson).message)) ||
+          (asJson && toRecord(asJson).error && String(toRecord(asJson).error)) ||
+          'Unable to download report.';
+        const error = new ApiError(response.status, message);
+        lastError = error;
+        if (response.status === 404 || response.status === 405) {
+          continue;
+        }
+        if (response.status === 401 || response.status === 403) {
+          throw error;
+        }
+        continue;
       }
-      throw new Error('Report download did not return a PDF file.');
+
+      const contentType = response.headers.get('content-type') || '';
+      const fileName =
+        parseFileName(response.headers.get('content-disposition')) || `edulearn-report-${Date.now()}.pdf`;
+
+      if (contentType.includes('application/json')) {
+        const body = await response.json().catch(() => ({}));
+        const data = toRecord(toRecord(body).data);
+        const urlValue = data.url || data.downloadUrl || data.reportUrl || data.fileUrl || toRecord(body).url;
+        if (typeof urlValue === 'string' && urlValue.length) {
+          return { type: 'url', url: urlValue, fileName };
+        }
+
+        const extractedRequest = extractSingleRequest(body);
+        if (extractedRequest?.status && extractedRequest.status !== 'APPROVED') {
+          throw new ApiError(403, `Report is ${extractedRequest.status}. Approval is required before download.`);
+        }
+
+        lastError = new Error('Report download did not return a PDF file.');
+        continue;
+      }
+
+      const blob = await response.blob();
+      return { type: 'blob', blob, fileName };
     }
 
-    const blob = await response.blob();
-    return { type: 'blob', blob, fileName };
+    throw lastError instanceof Error ? lastError : new Error('Unable to download report.');
   }
 };
 
