@@ -21,10 +21,7 @@ export default function AdminQuizzesPage() {
   const toast = useToast();
   const [quizzes, setQuizzes] = useState<QuizRow[]>([]);
   const [error, setError] = useState('');
-<<<<<<< HEAD:src/pages/AdminQuizzes.tsx
-=======
   const [saving, setSaving] = useState('');
->>>>>>> 0f769e6f4ce109c4f2ba777dad1d6f2a5daf4706:src/features/admin/pages/AdminQuizzesPage.tsx
 
   useEffect(() => {
     let mounted = true;
@@ -48,8 +45,6 @@ export default function AdminQuizzesPage() {
     };
   }, []);
 
-<<<<<<< HEAD:src/pages/AdminQuizzes.tsx
-=======
   const deleteQuiz = async (id: string) => {
     if (!window.confirm('Are you sure you want to delete this quiz?')) return;
 
@@ -67,7 +62,6 @@ export default function AdminQuizzesPage() {
     }
   };
 
->>>>>>> 0f769e6f4ce109c4f2ba777dad1d6f2a5daf4706:src/features/admin/pages/AdminQuizzesPage.tsx
   const rows = quizzes.map((quiz) => ({
     ...quiz,
     _id: quiz._id || quiz.id,
@@ -135,15 +129,6 @@ export default function AdminQuizzesPage() {
               renderActions={(row) => {
                 const id = String(row._id || row.id || '');
                 return (
-<<<<<<< HEAD:src/pages/AdminQuizzes.tsx
-                  <div className="flex items-center">
-                    <Link 
-                      to={`/admin-quizzes/${id}`}
-                      className="text-primary font-semibold text-sm hover:underline"
-                    >
-                      View
-                    </Link>
-=======
                   <div className="flex items-center gap-3">
                     <Link to={`/admin/quizzes/${id}`} className="text-primary font-semibold text-sm hover:underline">
                       View
@@ -158,7 +143,6 @@ export default function AdminQuizzesPage() {
                     >
                       {saving === id ? 'Deleting...' : 'Delete'}
                     </button>
->>>>>>> 0f769e6f4ce109c4f2ba777dad1d6f2a5daf4706:src/features/admin/pages/AdminQuizzesPage.tsx
                   </div>
                 );
               }}

@@ -12,12 +12,6 @@ const getQuizState = () =>
     scores: {}
   });
 
-<<<<<<< HEAD:src/pages/DashboardLearner.tsx
-export default function DashboardLearner() {
-  const [lessonCount, setLessonCount] = useState(0);
-  const [quizCount, setQuizCount] = useState(0);
-  const [error, setError] = useState('');
-=======
 interface Lesson {
   _id: string;
   title: string;
@@ -38,7 +32,6 @@ export default function DashboardLearner() {
   const [error, setError] = useState('');
   const [lessonCount, setLessonCount] = useState(0);
   const [quizCount, setQuizCount] = useState(0);
->>>>>>> 0f769e6f4ce109c4f2ba777dad1d6f2a5daf4706:src/features/learner/pages/LearnerDashboardPage.tsx
 
   const quizState = getQuizState();
   const completedQuizzes = Object.keys(quizState.completedQuizzes || {}).length;
@@ -46,28 +39,6 @@ export default function DashboardLearner() {
   const avg = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
 
   useEffect(() => {
-<<<<<<< HEAD:src/pages/DashboardLearner.tsx
-    let mounted = true;
-    const load = async () => {
-      try {
-        const [lessonsRes, quizzesRes] = await Promise.all([api.lessons.list(), api.quizzes.list()]);
-        if (!mounted) return;
-        setLessonCount(lessonsRes.data.lessons.length);
-        setQuizCount(quizzesRes.data.quizzes.length);
-      } catch (err: any) {
-        if (!mounted) return;
-        setError(err?.message || 'Failed to load learner dashboard data.');
-      }
-    };
-    load();
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  return (
-    <div className="bg-[#f5f8ff] text-slate-800">
-=======
     let isMounted = true;
 
     const fetchDashboardData = async () => {
@@ -110,7 +81,6 @@ export default function DashboardLearner() {
 
   return (
     <div className="min-h-screen bg-[#f5f8ff] text-slate-800">
->>>>>>> 0f769e6f4ce109c4f2ba777dad1d6f2a5daf4706:src/features/learner/pages/LearnerDashboardPage.tsx
       <TopBar />
       <PrimaryNav
         variant="dashboard"
@@ -219,8 +189,6 @@ export default function DashboardLearner() {
                 <p className="text-xs text-gray-500 mt-2">Your progress is saved locally.</p>
               </div>
             </div>
-<<<<<<< HEAD:src/pages/DashboardLearner.tsx
-=======
             <div className="mb-8">
               <p className="text-primary uppercase font-semibold tracking-wider text-sm">Real-time Stats</p>
               <h1 className="text-4xl font-extrabold gradient-text">Welcome back, {userData?.name || 'Learner'}</h1>
@@ -272,15 +240,12 @@ export default function DashboardLearner() {
                 </div>
               </>
             )}
->>>>>>> 0f769e6f4ce109c4f2ba777dad1d6f2a5daf4706:src/features/learner/pages/LearnerDashboardPage.tsx
           </div>
         </div>
       </section>
     </div>
   );
 }
-<<<<<<< HEAD:src/pages/DashboardLearner.tsx
-=======
 
 function StatCard({ title, value, note, noteColor = "text-gray-500" }: { title: string, value: string | number, note: string, noteColor?: string }) {
   return (
@@ -294,4 +259,3 @@ function StatCard({ title, value, note, noteColor = "text-gray-500" }: { title: 
 
 
 
->>>>>>> 0f769e6f4ce109c4f2ba777dad1d6f2a5daf4706:src/features/learner/pages/LearnerDashboardPage.tsx

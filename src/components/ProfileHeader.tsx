@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { getToken, getUser, type AuthUser } from '../core/auth/utils/auth.storage';
 import { api } from '../shared/utils/api';
+import { getToken, getUser, type AuthUser } from '../features/auth/utils/auth.storage';
 
 
 export default function ProfileHeader() {
   const [user, setUser] = useState<AuthUser | null>(() => getUser());
+
   const token = getToken();
 
   useEffect(() => {
