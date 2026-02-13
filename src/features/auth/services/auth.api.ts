@@ -72,16 +72,6 @@ export const authService = {
     return user as any;
   },
 
-  updateMe: async (payload: { name?: string; email?: string }) => {
-    const data = await request<{ data?: { user?: any }; user?: any }>('/auth/me', {
-      method: 'PATCH',
-      json: payload
-    });
-    const updatedUser = data.data?.user || data.user;
-    if (updatedUser) setUser(updatedUser);
-    return updatedUser || data;
-  },
-
   updatePassword: async (currentPassword: string, newPassword: string) => {
     return request<{ message?: string }>('/auth/update-password', {
       method: 'PATCH',
