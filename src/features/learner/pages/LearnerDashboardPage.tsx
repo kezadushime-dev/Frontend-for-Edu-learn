@@ -53,7 +53,7 @@ export default function DashboardLearner() {
         if (isMounted) {
           setLessons(lessonsRes.data.lessons || []);
           setQuizzes(quizzesRes.data.quizzes || []);
-          setUserData(userRes.data.user || null);
+          setUserData(userRes || null);
           setLessonCount(lessonsRes.data.lessons.length);
           setQuizCount(quizzesRes.data.quizzes.length);
           setError('');

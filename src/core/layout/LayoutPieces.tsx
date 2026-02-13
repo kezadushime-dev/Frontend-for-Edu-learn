@@ -1,5 +1,6 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import ProfileHeader from '../../components/ProfileHeader';
+import { useEffect, useState } from 'react';
 
 type NavItem = {
   label: string;
@@ -13,6 +14,13 @@ type PrimaryNavProps = {
 };
 
 export function PrimaryNav({ variant, items }: PrimaryNavProps) {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const location = useLocation();
+
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [location.pathname]);
+
   if (variant === 'admin') {
     return (
       <nav className="fixed top-[40px] left-0 right-0 z-40 bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-lg">
@@ -37,12 +45,12 @@ export function PrimaryNav({ variant, items }: PrimaryNavProps) {
     return (
       <nav className="fixed top-[40px] left-0 right-0 z-40 bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+          <div className="flex justify-between items-center h-16 gap-3">
             <div className="flex items-center gap-2">
               <i data-lucide="book-open" className="h-8 w-8 text-primary"></i>
-              <span className="text-2xl font-bold text-primary">Edu Learn</span>
+              <span className="text-xl sm:text-2xl font-bold text-primary">Edu Learn</span>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="hidden md:flex items-center gap-4">
               {(items || []).map((item) => (
                 <Link key={item.label} to={item.to} className={item.className || 'text-gray-700 hover:text-primary transition-colors font-medium'}>
                   {item.label}
@@ -50,7 +58,30 @@ export function PrimaryNav({ variant, items }: PrimaryNavProps) {
               ))}
               <ProfileHeader />
             </div>
+            <button
+              onClick={() => setMobileOpen((prev) => !prev)}
+              className="md:hidden rounded-md border border-gray-300 px-3 py-1.5 text-sm font-semibold text-gray-700 hover:border-primary hover:text-primary transition"
+            >
+              {mobileOpen ? 'Close' : 'Menu'}
+            </button>
           </div>
+
+          {mobileOpen ? (
+            <div className="md:hidden border-t border-gray-200 py-3 space-y-2">
+              {(items || []).map((item) => (
+                <Link
+                  key={item.label}
+                  to={item.to}
+                  className={item.className || 'block rounded-md px-2 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-primary transition'}
+                >
+                  {item.label}
+                </Link>
+              ))}
+              <div className="pt-2 border-t border-gray-100">
+                <ProfileHeader />
+              </div>
+            </div>
+          ) : null}
         </div>
       </nav>
     );
@@ -97,8 +128,8 @@ export function PrimaryNav({ variant, items }: PrimaryNavProps) {
 export function TopBar({ animated = true }: { animated?: boolean }) {
   return (
     <div className={`fixed top-0 left-0 right-0 z-50 bg-dark text-white text-sm ${animated ? 'animate-slideInLeft' : ''}`}>
-      <div className="max-w-7xl mx-auto flex justify-between items-center px-6 py-2">
-        <div className="flex items-center gap-6">
+      <div className="max-w-7xl mx-auto flex justify-between items-center px-4 sm:px-6 py-2 gap-3">
+        <div className="flex items-center gap-3 sm:gap-6 overflow-x-auto">
           <span className="flex items-center gap-2 hover:text-primary transition">
             <i data-lucide="mail" className="w-4 h-4"></i> info@edulearn.com
           </span>
@@ -106,7 +137,7 @@ export function TopBar({ animated = true }: { animated?: boolean }) {
             <i data-lucide="phone" className="w-4 h-4"></i> 0734564463
           </span>
         </div>
-        <div className="flex gap-4">
+        <div className="hidden sm:flex gap-4">
           <i data-lucide="facebook" className="w-4 h-4 hover:text-primary cursor-pointer transition transform hover:scale-110"></i>
           <i data-lucide="twitter" className="w-4 h-4 hover:text-primary cursor-pointer transition transform hover:scale-110"></i>
           <i data-lucide="linkedin" className="w-4 h-4 hover:text-primary cursor-pointer transition transform hover:scale-110"></i>
@@ -214,7 +245,7 @@ export function Footer() {
 
       <div className="border-t border-gray-800">
         <div className="max-w-7xl mx-auto px-6 py-6 flex flex-col md:flex-row justify-between items-center">
-          <p className="text-sm">© 2026 EduLearn. All rights reserved.</p>
+          <p className="text-sm">Â© 2026 EduLearn. All rights reserved.</p>
           <div className="flex gap-6 text-sm">
             <span className="hover:text-primary cursor-pointer transition">Privacy Policy</span>
             <span className="hover:text-primary cursor-pointer transition">Terms of Service</span>
@@ -225,3 +256,4 @@ export function Footer() {
     </footer>
   );
 }
+

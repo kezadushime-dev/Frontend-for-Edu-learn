@@ -7,6 +7,9 @@ type RequestDownloadInput = {
   courseId?: string;
   courseName?: string;
   classLevel?: string;
+  quizId?: string;
+  quizTitle?: string;
+  quiz?: string;
 };
 
 type ReportRequestFilters = {
@@ -184,7 +187,7 @@ export const reportService = {
     return normalizeReportRequest(pickRequestLikeObject(response));
   },
 
-  downloadApprovedReport: async (params: { requestId?: string; courseId?: string } = {}): Promise<DownloadReportResult> => {
+  downloadApprovedReport: async (params: { requestId?: string; courseId?: string; quizId?: string } = {}): Promise<DownloadReportResult> => {
     const token = getToken();
     const headers = new Headers();
     if (token) headers.set('Authorization', `Bearer ${token}`);
@@ -192,15 +195,16 @@ export const reportService = {
     const query = new URLSearchParams();
     if (params.requestId) query.set('requestId', params.requestId);
     if (params.courseId) query.set('courseId', params.courseId);
+    if (params.quizId) query.set('quizId', params.quizId);
 
     const queryString = query.toString() ? `?${query.toString()}` : '';
     const withSlashQueryString = queryString ? `/?${query.toString()}` : '/';
     const candidates = [
+      `${baseUrl}/reports/download${queryString}`,
       `${baseUrl}/reports/`,
       `${baseUrl}/reports`,
       `${baseUrl}/reports${queryString}`,
-      `${baseUrl}/reports${withSlashQueryString}`,
-      `${baseUrl}/reports/download${queryString}`
+      `${baseUrl}/reports${withSlashQueryString}`
     ];
 
     let lastError: unknown = null;
