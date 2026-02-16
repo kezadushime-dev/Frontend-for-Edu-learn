@@ -1,0 +1,1 @@
+look in routes for the page which has this route instructor/quiz-create  and when i got to manage quiz sidebar and click edit i should be able to edit the quiz questions and also fix it and set correct anser use same dising as quiz-create

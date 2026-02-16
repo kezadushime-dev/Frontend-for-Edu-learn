@@ -13,6 +13,23 @@ const extractUser = (payload: unknown): UnknownRecord | null => {
   return user && typeof user === 'object' ? (user as UnknownRecord) : null;
 };
 
+const normalizeUser = (user: UnknownRecord | null): UnknownRecord | null => {
+  if (!user) return null;
+  const image =
+    user.image ??
+    user.imageUrl ??
+    user.avatar ??
+    user.avatarUrl ??
+    user.profileImage ??
+    user.profilePhoto ??
+    user.photo ??
+    user.photoUrl;
+  if (typeof image === 'string' && image.trim()) {
+    return { ...user, image };
+  }
+  return user;
+};
+
 const extractToken = (payload: unknown): string | null => {
   const body = toRecord(payload);
   const data = toRecord(body.data);
@@ -36,7 +53,7 @@ export const authService = {
     const token = extractToken(data);
     if (token) setToken(token);
 
-    const user = extractUser(data);
+    const user = normalizeUser(extractUser(data));
     if (user) setUser(user);
     return user as any;
   },
@@ -50,14 +67,14 @@ export const authService = {
     const token = extractToken(data);
     if (token) setToken(token);
 
-    const user = extractUser(data);
+    const user = normalizeUser(extractUser(data));
     if (user) setUser(user);
     return user as any;
   },
 
   me: async (): Promise<any> => {
     const data = await request<unknown>('/auth/me');
-    const user = extractUser(data);
+    const user = normalizeUser(extractUser(data));
     if (user) setUser(user);
     return user as any;
   },
@@ -67,7 +84,7 @@ export const authService = {
       method: 'PATCH',
       json: payload
     });
-    const user = extractUser(data);
+    const user = normalizeUser(extractUser(data));
     if (user) setUser(user);
     return user as any;
   },
