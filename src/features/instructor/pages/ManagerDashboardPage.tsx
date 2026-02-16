@@ -10,6 +10,7 @@ import {
   type AssignmentItem,
   type TrendPoint
 } from '../../../components/dashboard/OverviewWidgets';
+import { LessonCard, QuizCard } from '../../../components/ContentCard';
 import { uiStore } from '../../../shared/data/uiStore';
 import { api } from '../../../shared/utils/api';
 
@@ -17,6 +18,7 @@ type LessonItem = {
   _id?: string;
   id?: string;
   title?: string;
+  category?: string;
   createdAt?: string;
   updatedAt?: string;
   isPublished?: boolean;
@@ -26,6 +28,8 @@ type QuizItem = {
   _id?: string;
   id?: string;
   title?: string;
+  category?: string;
+  passingScore?: number;
   createdAt?: string;
   updatedAt?: string;
   isActive?: boolean;
@@ -260,82 +264,52 @@ export default function ManagerDashboardPage() {
             </div>
 
             <div className="mt-8 grid gap-6 xl:grid-cols-2">
-              <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white/95 shadow-[0_14px_30px_-18px_rgba(15,23,42,0.45)]">
-                <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+              <div className="rounded-2xl border border-slate-200/80 bg-white/95 p-5 shadow-[0_14px_30px_-18px_rgba(15,23,42,0.45)]">
+                <div className="flex items-center justify-between mb-4">
                   <h3 className="font-bold text-slate-800">Courses</h3>
                   <span className="text-xs font-semibold text-slate-500">{lessons.length}</span>
                 </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500">
-                      <tr>
-                        <th className="px-4 py-3 text-left">Lesson</th>
-                        <th className="px-4 py-3 text-left">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {lessonRows.length ? (
-                        lessonRows.map((lesson, index) => (
-                          <tr key={`${lesson.id || lesson.title}-${index}`} className="hover:bg-slate-50">
-                            <td className="px-4 py-3 font-medium text-slate-700">{lesson.title}</td>
-                            <td className="px-4 py-3">
-                              <span
-                                className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
-                                  lesson.status === 'Published' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
-                                }`}
-                              >
-                                {lesson.status}
-                              </span>
-                            </td>
-                          </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td colSpan={2} className="px-4 py-6 text-center text-slate-500">No lessons found.</td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
+                {lessons.length > 0 ? (
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {lessons.slice(0, 4).map((lesson) => (
+                      <LessonCard
+                        key={lesson._id || lesson.id}
+                        id={lesson._id || lesson.id || ''}
+                        title={lesson.title || 'Untitled'}
+                        category={lesson.category || 'General'}
+                        isPublished={lesson.isPublished}
+                        createdAt={lesson.createdAt}
+                        viewLink={`/instructor/lesson/${lesson._id || lesson.id}`}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="py-6 text-center text-slate-500">No lessons found.</div>
+                )}
               </div>
 
-              <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white/95 shadow-[0_14px_30px_-18px_rgba(15,23,42,0.45)]">
-                <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+              <div className="rounded-2xl border border-slate-200/80 bg-white/95 p-5 shadow-[0_14px_30px_-18px_rgba(15,23,42,0.45)]">
+                <div className="flex items-center justify-between mb-4">
                   <h3 className="font-bold text-slate-800">Assessments</h3>
                   <span className="text-xs font-semibold text-slate-500">{quizzes.length}</span>
                 </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500">
-                      <tr>
-                        <th className="px-4 py-3 text-left">Quiz</th>
-                        <th className="px-4 py-3 text-left">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {quizRows.length ? (
-                        quizRows.map((quiz, index) => (
-                          <tr key={`${quiz.id || quiz.title}-${index}`} className="hover:bg-slate-50">
-                            <td className="px-4 py-3 font-medium text-slate-700">{quiz.title}</td>
-                            <td className="px-4 py-3">
-                              <span
-                                className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
-                                  quiz.status === 'Active' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-700'
-                                }`}
-                              >
-                                {quiz.status}
-                              </span>
-                            </td>
-                          </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td colSpan={2} className="px-4 py-6 text-center text-slate-500">No quizzes found.</td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
+                {quizzes.length > 0 ? (
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {quizzes.slice(0, 4).map((quiz) => (
+                      <QuizCard
+                        key={quiz._id || quiz.id}
+                        id={quiz._id || quiz.id || ''}
+                        title={quiz.title || 'Untitled'}
+                        passingScore={quiz.passingScore}
+                        isActive={quiz.isActive}
+                        createdAt={quiz.createdAt}
+                        viewLink={`/instructor/quiz/${quiz._id || quiz.id}`}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="py-6 text-center text-slate-500">No quizzes found.</div>
+                )}
               </div>
             </div>
 

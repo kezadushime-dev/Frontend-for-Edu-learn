@@ -1,6 +1,25 @@
-- [x] Create src/services/authService.ts with auth-related functions
-- [x] Create src/services/lessonService.ts with lesson-related functions
-- [x] Create src/services/quizService.ts with quiz-related functions
-- [x] Create src/services/adminService.ts with admin-related functions
-- [x] Update src/utils/api.ts to import from the new service files and export the api object
-- [x] Run TypeScript check to ensure no errors
+# TODO: Convert Tables to Cards for Instructor Dashboard
+
+## Files to Edit:
+
+- [ ] 1. ManagerDashboardPage.tsx - Convert "Courses" and "Assessments" tables to cards
+- [ ] 2. InstructorLessonsPage.tsx - Convert lessons table to cards
+- [ ] 3. InstructorQuizzesPage.tsx - Convert quizzes table to cards
+
+## Card Design Requirements:
+
+Each card should show:
+
+- pic: Placeholder image (gradient/icon-based)
+- names: Title of the lesson/quiz
+- its components: Related info (category, status)
+- hour: Estimated duration (placeholder)
+- category: Category badge
+
+## Progress:
+
+- [ ] 1. ManagerDashboardPage.tsx
+- [ ] 2. InstructorLessonsPage.tsx
+- [ ] 3. InstructorQuizzesPage.tsx
+
+## Status: In Progress
