@@ -65,7 +65,6 @@ export default function InstructorQuizzes() {
     }
   };
 
-  if (loading) return <div>Loading...</div>;
   if (error) return <div>{error}</div>;
 
   return (
@@ -126,7 +125,7 @@ export default function InstructorQuizzes() {
             </div>
           )}
 
-          {quizzes.length > 0 ? (
+          {!loading && quizzes.length > 0 ? (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {quizzes.map((quiz) => (
                 <QuizCard
@@ -141,11 +140,11 @@ export default function InstructorQuizzes() {
                 />
               ))}
             </div>
-          ) : (
+          ) : !loading ? (
             <div className="bg-white rounded-xl shadow-lg p-6">
               <div className="py-12 text-center text-gray-500">No quizzes found</div>
             </div>
-          )}
+          ) : null}
         </div>
       </section>
     </div>

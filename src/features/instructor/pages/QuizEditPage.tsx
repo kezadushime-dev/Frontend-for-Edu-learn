@@ -91,7 +91,7 @@ export default function QuizEdit() {
     }
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return null;
 
   return (
     <div className="bg-[#f5f8ff] text-slate-800">

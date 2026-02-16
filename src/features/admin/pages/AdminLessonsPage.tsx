@@ -1,8 +1,8 @@
-﻿import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { PrimaryNav, TopBar } from '../../../core/layout/LayoutPieces';
 import { Sidebar } from '../../../core/layout/Sidebars';
-import { AdminTable } from '../../../components/AdminTable';
+import { LessonCard } from '../../../components/ContentCard';
 import { api } from '../../../shared/utils/api';
 import { useToast } from '../../../shared/hooks/useToast';
 
@@ -10,13 +10,16 @@ type LessonRow = {
   _id?: string;
   id?: string;
   title?: string;
+  description?: string;
   category?: string;
   createdBy?: string;
   instructor?: { name?: string };
   isPublished?: boolean;
+  images?: string[];
 };
 
 export default function AdminLessonsPage() {
+  const navigate = useNavigate();
   const toast = useToast();
   const [lessons, setLessons] = useState<LessonRow[]>([]);
   const [error, setError] = useState('');
@@ -45,25 +48,22 @@ export default function AdminLessonsPage() {
   }, []);
 
   const deleteLesson = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this lesson?')) return;
-    
+    if (!window.confirm('Are you sure you want to delete this lesson?')) return;
+    if (saving === id) return;
+
     setSaving(id);
     try {
       await api.lessons.delete(id);
-      setLessons((prev) => prev.filter((lesson) => lesson._id !== id));
-    } catch (err: any) {
-      setError(err?.message || 'Failed to delete lesson.');
+      setLessons((prev) => prev.filter((lesson) => String(lesson._id || lesson.id) !== id));
+      toast.success('Lesson deleted.');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to delete lesson.';
+      setError(message);
+      toast.error(message);
     } finally {
       setSaving('');
     }
   };
-
-  const rows = lessons.map((lesson) => ({
-    ...lesson,
-    _id: lesson._id || lesson.id,
-    createdBy: lesson.instructor?.name || lesson.createdBy || '—',
-    status: lesson.isPublished === false ? 'Draft' : 'Published'
-  }));
 
   return (
     <div className="bg-[#f5f8ff] text-slate-800">
@@ -104,46 +104,35 @@ export default function AdminLessonsPage() {
 
           {error ? <p className="text-red-600 text-sm mb-4">{error}</p> : null}
 
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <AdminTable
-              columns={[
-                { key: 'title', label: 'Title' },
-                { key: 'category', label: 'Category' },
-                { key: 'createdBy', label: 'Created By' },
-                { key: 'status', label: 'Status' }
-              ]}
-              rows={rows}
-              renderActions={(row) => {
-                const id = String(row._id || row.id || '');
+          {lessons.length > 0 ? (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {lessons.map((lesson) => {
+                const id = String(lesson._id || lesson.id || '');
                 return (
-                  <div className="flex items-center gap-3">
-                    <Link 
-                      to={`/lesson/${id}`}
-                      className="text-primary font-semibold text-sm hover:underline"
-                    >
-                      View
-                    </Link>
-                    <Link 
-                      to={`/lesson-edit/${id}`}
-                      className="text-blue-600 font-semibold text-sm hover:underline"
-                    >
-                      Edit
-                    </Link>
-                    <button
-                      className="text-red-600 font-semibold text-sm"
-                      onClick={() => deleteLesson(id)}
-                      disabled={saving === id}
-                    >
-                      {saving === id ? 'Deleting...' : 'Delete'}
-                    </button>
-                  </div>
+                  <LessonCard
+                    key={id}
+                    id={id}
+                    title={lesson.title || 'Untitled Lesson'}
+                    description={lesson.description}
+                    category={lesson.category || 'General'}
+                    createdBy={lesson.createdBy}
+                    instructor={lesson.instructor as { name: string } | undefined}
+                    isPublished={lesson.isPublished}
+                    images={lesson.images}
+                    viewLink={`/lesson/${id}`}
+                    onEdit={() => navigate(`/lesson-edit/${id}`)}
+                    onDelete={(targetId) => deleteLesson(targetId)}
+                  />
                 );
-              }}
-            />
-          </div>
+              })}
+            </div>
+          ) : (
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <div className="py-12 text-center text-gray-500">No lessons found</div>
+            </div>
+          )}
         </div>
       </section>
     </div>
   );
 }
-

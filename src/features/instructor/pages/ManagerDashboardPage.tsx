@@ -217,7 +217,6 @@ export default function ManagerDashboardPage() {
               </div>
 
               {error ? <p className="mt-4 text-sm text-rose-600">{error}</p> : null}
-              {loading ? <p className="mt-4 text-sm text-slate-500">Loading manager insights...</p> : null}
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">

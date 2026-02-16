@@ -63,7 +63,7 @@ export default function LessonEdit() {
     }
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return null;
   if (error && !lesson) return <div>{error}</div>;
 
   return (
