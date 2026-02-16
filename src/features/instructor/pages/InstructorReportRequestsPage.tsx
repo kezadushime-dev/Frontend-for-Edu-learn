@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { PrimaryNav, TopBar } from '../../../core/layout/LayoutPieces';
 import { Sidebar } from '../../../core/layout/Sidebars';
 import ReportRequestTable from '../../../components/ReportRequestTable';
@@ -15,73 +16,51 @@ const sortByDate = (requests: ReportRequest[]): ReportRequest[] =>
   });
 
 export default function InstructorReportRequestsPage() {
-  const [rows, setRows] = useState<ReportRequest[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const queryClient = useQueryClient();
   const [actionId, setActionId] = useState('');
   const [filter, setFilter] = useState<FilterStatus>('ALL');
-  const [lastSynced, setLastSynced] = useState<string>('');
+  const [actionError, setActionError] = useState('');
 
-  useEffect(() => {
-    let active = true;
+  const {
+    data: rows = [],
+    isLoading: loading,
+    error: loadError,
+    dataUpdatedAt
+  } = useQuery({
+    queryKey: ['reports', 'instructor', filter],
+    queryFn: async () => {
+      const data = await api.reports.listRequests({ status: filter });
+      return sortByDate(data);
+    },
+    refetchOnWindowFocus: true,
+    refetchInterval: 12000,
+    staleTime: 0
+  });
 
-    const load = async () => {
-      try {
-        if (!active) return;
-        const data = await api.reports.listRequests({ status: filter });
-        if (!active) return;
-        setRows(sortByDate(data));
-        setError('');
-        setLastSynced(new Date().toLocaleTimeString());
-      } catch (loadError: unknown) {
-        if (!active) return;
-        setError(loadError instanceof Error ? loadError.message : 'Failed to load report requests.');
-      } finally {
-        if (active) setLoading(false);
-      }
-    };
-
-    void load();
-    const interval = window.setInterval(() => {
-      void load();
-    }, 12000);
-
-    return () => {
-      active = false;
-      window.clearInterval(interval);
-    };
-  }, [filter]);
+  const approveMutation = useMutation({
+    mutationFn: async ({ requestId, status }: { requestId: string; status: 'APPROVED' | 'REJECTED' }) =>
+      api.reports.decideRequest(requestId, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reports'] });
+      queryClient.invalidateQueries({ queryKey: ['my-reports'] });
+      setActionError('');
+    },
+    onError: (error: unknown) => {
+      setActionError(error instanceof Error ? error.message : 'Failed to update request status.');
+    }
+  });
 
   const applyDecision = async (requestId: string, status: 'APPROVED' | 'REJECTED') => {
     setActionId(requestId);
-    setError('');
-    try {
-      const updated = await api.reports.decideRequest(requestId, status);
-      const nowIso = new Date().toISOString();
-      setRows((previous) =>
-        sortByDate(
-          previous.map((item) => {
-            if (item.id !== requestId) return item;
-
-            return {
-              ...item,
-              status: updated.status === 'PENDING' ? status : updated.status,
-              approvedBy: updated.approvedBy ?? item.approvedBy,
-              approvedByName: updated.approvedByName ?? item.approvedByName,
-              approvedByRole: updated.approvedByRole ?? item.approvedByRole,
-              updatedAt: updated.updatedAt || nowIso,
-              createdAt: updated.createdAt || item.createdAt
-            };
-          })
-        )
-      );
-      setLastSynced(new Date().toLocaleTimeString());
-    } catch (actionError: unknown) {
-      setError(actionError instanceof Error ? actionError.message : 'Failed to update request status.');
-    } finally {
-      setActionId('');
-    }
+    setActionError('');
+    approveMutation.mutate(
+      { requestId, status },
+      { onSettled: () => setActionId('') }
+    );
   };
+
+  const error = actionError || (loadError instanceof Error ? loadError.message : '');
+  const lastSynced = dataUpdatedAt ? new Date(dataUpdatedAt).toLocaleTimeString() : '';
 
   const statusSummary = useMemo(() => {
     const pending = rows.filter((row) => row.status === 'PENDING').length;
