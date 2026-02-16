@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { PrimaryNav, TopBar } from '../../../core/layout/LayoutPieces';
 import { Sidebar } from '../../../core/layout/Sidebars';
 import { AdminFormFields } from '../../../components/AdminFormFields';
+import { QuizCard } from '../../../components/ContentCard';
 import { uiStore } from '../../../shared/data/uiStore';
 import { api } from '../../../shared/utils/api';
 
@@ -10,6 +11,7 @@ interface Quiz {
   _id: string;
   title: string;
   passingScore: number;
+  isActive?: boolean;
   createdAt: string;
 }
 
@@ -125,41 +127,26 @@ export default function InstructorQuizzes() {
             </div>
           )}
 
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-3 text-left font-semibold">Title</th>
-                    <th className="px-4 py-3 text-left font-semibold">Passing Score</th>
-                    <th className="px-4 py-3 text-left font-semibold">Created</th>
-                    <th className="px-4 py-3 text-left font-semibold">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {quizzes.length === 0 ? (
-                    <tr>
-                      <td colSpan={4} className="px-4 py-6 text-center text-gray-500">No quizzes found</td>
-                    </tr>
-                  ) : (
-                    quizzes.map((quiz) => (
-                      <tr key={quiz._id} className="border-t hover:bg-gray-50">
-                        <td className="px-4 py-3">{quiz.title}</td>
-                        <td className="px-4 py-3">{quiz.passingScore}%</td>
-                        <td className="px-4 py-3">{new Date(quiz.createdAt).toLocaleDateString()}</td>
-                        <td className="px-4 py-3">
-                          <div className="flex gap-2">
-                            <button onClick={() => handleEdit(quiz)} className="text-green-600 hover:underline">Edit</button>
-                            <button onClick={() => handleDelete(quiz._id)} className="text-red-600 hover:underline">Delete</button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+          {quizzes.length > 0 ? (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {quizzes.map((quiz) => (
+                <QuizCard
+                  key={quiz._id}
+                  id={quiz._id}
+                  title={quiz.title}
+                  passingScore={quiz.passingScore}
+                  isActive={quiz.isActive}
+                  createdAt={quiz.createdAt}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                />
+              ))}
             </div>
-          </div>
+          ) : (
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <div className="py-12 text-center text-gray-500">No quizzes found</div>
+            </div>
+          )}
         </div>
       </section>
     </div>

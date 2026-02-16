@@ -1,4 +1,3 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 
 // Category-based colors for placeholder images
@@ -68,7 +67,6 @@ export function LessonCard({
   category, 
   createdBy, 
   instructor, 
-  createdAt, 
   isPublished, 
   images,
   onEdit, 

@@ -1,25 +1,34 @@
-# TODO: Convert Tables to Cards for Instructor Dashboard
+# TODO: Replace Tables with Cards in Quiz and Lesson Management Pages
 
-## Files to Edit:
+## Task: Improve the table in dashboard manage in manage quiz and lesson by replacing tables with cards
 
-- [ ] 1. ManagerDashboardPage.tsx - Convert "Courses" and "Assessments" tables to cards
-- [ ] 2. InstructorLessonsPage.tsx - Convert lessons table to cards
-- [ ] 3. InstructorQuizzesPage.tsx - Convert quizzes table to cards
+## Files to Update:
 
-## Card Design Requirements:
+### 1. InstructorQuizzesPage
 
-Each card should show:
+- [x] Replace table with QuizCard component
+- [x] Keep edit and delete functionality
 
-- pic: Placeholder image (gradient/icon-based)
-- names: Title of the lesson/quiz
-- its components: Related info (category, status)
-- hour: Estimated duration (placeholder)
-- category: Category badge
+### 2. InstructorLessonsPage
+
+- [ ] Replace table with LessonCard component
+- [ ] Keep edit and delete functionality
+
+### 3. AdminQuizzesPage
+
+- [ ] Replace AdminTable with QuizCard component
+- [ ] Keep edit and delete functionality
+
+### 4. AdminLessonsPage
+
+- [ ] Replace AdminTable with LessonCard component
+- [ ] Keep edit and delete functionality
 
 ## Progress:
 
-- [ ] 1. ManagerDashboardPage.tsx
-- [ ] 2. InstructorLessonsPage.tsx
-- [ ] 3. InstructorQuizzesPage.tsx
-
-## Status: In Progress
+- [x] Analyzed codebase and identified files needing updates
+- [x] Confirmed plan with user
+- [x] Updated InstructorQuizzesPage
+- [ ] Updating InstructorLessonsPage
+- [ ] Updating AdminQuizzesPage
+- [ ] Updating AdminLessonsPage

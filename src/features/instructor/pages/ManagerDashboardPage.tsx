@@ -176,18 +176,6 @@ export default function ManagerDashboardPage() {
     return dynamicItems;
   }, [draftLessons, quizzes]);
 
-  const lessonRows = lessons.slice(0, 8).map((lesson) => ({
-    id: lesson._id || lesson.id || '',
-    title: lesson.title || 'N/A',
-    status: lesson.isPublished === false ? 'Draft' : 'Published'
-  }));
-
-  const quizRows = quizzes.slice(0, 8).map((quiz) => ({
-    id: quiz._id || quiz.id || '',
-    title: quiz.title || 'N/A',
-    status: quiz.isActive === false ? 'Paused' : 'Active'
-  }));
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 via-[#eef4ff] to-[#f8fbff] text-slate-800">
       <TopBar />
