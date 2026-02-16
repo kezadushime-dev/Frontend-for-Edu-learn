@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { PrimaryNav, TopBar } from '../../../core/layout/LayoutPieces';
 import { Sidebar } from '../../../core/layout/Sidebars';
@@ -11,7 +12,6 @@ import {
   formatReportDate,
   getPerformanceLevel
 } from '../../../shared/report/report.utils';
-import type { ReportRequest } from '../../../shared/types/report';
 import ReportStatusBadge from '../../../components/ReportStatusBadge';
 
 const getQuizState = () =>
@@ -36,12 +36,19 @@ export default function DashboardLearner() {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [analytics, setAnalytics] = useState<unknown[]>([]);
-  const [reportRequest, setReportRequest] = useState<ReportRequest | null>(null);
   const [userData, setUserData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [lessonCount, setLessonCount] = useState(0);
   const [quizCount, setQuizCount] = useState(0);
+
+  const { data: reportRequest } = useQuery({
+    queryKey: ['my-reports'],
+    queryFn: () => api.reports.getLearnerRequest(),
+    refetchOnWindowFocus: true,
+    staleTime: 0,
+    refetchInterval: 5000
+  });
 
   const quizState = getQuizState();
   const completedQuizzes = Object.keys(quizState.completedQuizzes || {}).length;
@@ -54,12 +61,11 @@ export default function DashboardLearner() {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
-        const [lessonsRes, quizzesRes, userRes, analyticsRes, learnerRequestRes] = await Promise.all([
+        const [lessonsRes, quizzesRes, userRes, analyticsRes] = await Promise.all([
           api.lessons.list(),
           api.quizzes.list(),
           api.auth.me(),
-          api.quizzes.analytics().catch(() => ({ data: { analytics: [] } })),
-          api.reports.getLearnerRequest().catch(() => null)
+          api.quizzes.analytics().catch(() => ({ data: { analytics: [] } }))
         ]);
 
         if (isMounted) {
@@ -69,7 +75,6 @@ export default function DashboardLearner() {
           setLessonCount(lessonsRes.data.lessons.length);
           setQuizCount(quizzesRes.data.quizzes.length);
           setAnalytics((analyticsRes as { data?: { analytics?: unknown[] } }).data?.analytics || []);
-          setReportRequest(learnerRequestRes);
           setError('');
         }
       } catch (err: any) {
@@ -84,29 +89,6 @@ export default function DashboardLearner() {
 
     fetchDashboardData();
     return () => { isMounted = false; };
-  }, []);
-
-  useEffect(() => {
-    let active = true;
-
-    const syncLearnerRequest = async () => {
-      try {
-        const next = await api.reports.getLearnerRequest();
-        if (!active) return;
-        setReportRequest(next);
-      } catch {
-        // Keep previous value on transient sync errors.
-      }
-    };
-
-    const interval = window.setInterval(() => {
-      void syncLearnerRequest();
-    }, 12000);
-
-    return () => {
-      active = false;
-      window.clearInterval(interval);
-    };
   }, []);
 
   const reportSubjects = useMemo(() => buildSubjectRows(analytics, []), [analytics]);

@@ -5,8 +5,6 @@ import { AdminTable } from '../../../components/AdminTable';
 import { api } from '../../../shared/utils/api';
 import { useToast } from '../../../shared/hooks/useToast';
 
-
-
 const roleOptions = ['learner', 'instructor', 'admin'];
 
 export default function AdminUsers() {
@@ -16,9 +14,12 @@ export default function AdminUsers() {
   const [saving, setSaving] = useState<string>('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [formData, setFormData] = useState({ name: '', email: '', password: '', role: 'learner' });
+  const [editFormData, setEditFormData] = useState({ name: '', email: '', role: 'learner', isActive: true });
   const [loading, setLoading] = useState(false);
+  const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -37,21 +38,6 @@ export default function AdminUsers() {
       mounted = false;
     };
   }, []);
-
-  const updateRole = async (id: string, role: string) => {
-    setSaving(id);
-    try {
-      const res = await api.admin.updateRole(id, role);
-      setUsers((prev) => prev.map((user) => (user._id === id ? (res as any).data.user : user)));
-      toast.success('User role updated.');
-    } catch (err: any) {
-      const message = err?.message || 'Failed to update role.';
-      setError(message);
-      toast.error(message);
-    } finally {
-      setSaving('');
-    }
-  };
 
   const deleteUser = async (id: string) => {
     setSaving(id);
@@ -89,6 +75,37 @@ export default function AdminUsers() {
   const handleViewUser = (user: any) => {
     setSelectedUser(user);
     setShowViewModal(true);
+  };
+
+  const handleEditUser = (user: any) => {
+    setSelectedUser(user);
+    setEditFormData({
+      name: String(user.name || ''),
+      email: String(user.email || ''),
+      role: String(user.role || 'learner'),
+      isActive: Boolean(user.isActive ?? true)
+    });
+    setShowEditModal(true);
+  };
+
+  const handleUpdateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const id = String(selectedUser?._id || selectedUser?.id || '');
+    if (!id) return;
+
+    setUpdating(true);
+    try {
+      const res = await api.admin.updateUser(id, editFormData);
+      setUsers((prev) => prev.map((user) => (String(user._id || user.id) === id ? (res as any).data.user : user)));
+      setShowEditModal(false);
+      toast.success('User updated.');
+    } catch (err: any) {
+      const message = err?.message || 'Failed to update user.';
+      setError(message);
+      toast.error(message);
+    } finally {
+      setUpdating(false);
+    }
   };
 
   const rows = users.map((user) => ({
@@ -148,7 +165,6 @@ export default function AdminUsers() {
               rows={rows}
               renderActions={(row) => {
                 const id = String(row._id || row.id || '');
-                const role = String(row.role || 'learner');
                 return (
                   <div className="flex items-center gap-3">
                     <button
@@ -157,19 +173,12 @@ export default function AdminUsers() {
                     >
                       View
                     </button>
-                    <select
-                      className="border border-gray-200 rounded-md px-2 py-1 text-sm"
-                      value={role}
-                      onChange={(event) => updateRole(id, event.target.value)}
-                      disabled={saving === id}
-                      aria-label="Select user role"
+                    <button
+                      onClick={() => handleEditUser(row)}
+                      className="text-primary font-semibold text-sm hover:underline"
                     >
-                      {roleOptions.map((opt) => (
-                        <option key={opt} value={opt}>
-                          {opt}
-                        </option>
-                      ))}
-                    </select>
+                      Edit
+                    </button>
                     <button
                       className="text-red-600 font-semibold text-sm"
                       onClick={() => deleteUser(id)}
@@ -247,6 +256,78 @@ export default function AdminUsers() {
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(false)}
+                  className="flex-1 border border-gray-300 py-2 rounded-md font-semibold hover:bg-gray-50 transition-all"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit User Modal */}
+      {showEditModal && selectedUser && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-8 max-w-md w-full mx-4">
+            <h2 className="text-2xl font-bold mb-4">Edit User</h2>
+            <form onSubmit={handleUpdateUser} className="grid gap-4">
+              <div>
+                <label className="text-sm font-semibold mb-1 block">Name</label>
+                <input
+                  type="text"
+                  value={editFormData.name}
+                  onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                  required
+                />
+              </div>
+              <div>
+                <label className="text-sm font-semibold mb-1 block">Email</label>
+                <input
+                  type="email"
+                  value={editFormData.email}
+                  onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
+                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                  required
+                />
+              </div>
+              <div>
+                <label className="text-sm font-semibold mb-1 block">Status</label>
+                <select
+                  value={editFormData.isActive ? 'active' : 'inactive'}
+                  onChange={(e) => setEditFormData({ ...editFormData, isActive: e.target.value === 'active' })}
+                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-sm font-semibold mb-1 block">Role</label>
+                <select
+                  value={editFormData.role}
+                  onChange={(e) => setEditFormData({ ...editFormData, role: e.target.value })}
+                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                  {roleOptions.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt[0].toUpperCase() + opt.slice(1)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex gap-3 mt-4">
+                <button
+                  type="submit"
+                  disabled={updating}
+                  className="flex-1 bg-primary text-white py-2 rounded-md font-semibold hover:bg-blue-700 transition-all disabled:opacity-60"
+                >
+                  {updating ? 'Saving...' : 'Save Changes'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
                   className="flex-1 border border-gray-300 py-2 rounded-md font-semibold hover:bg-gray-50 transition-all"
                 >
                   Cancel
