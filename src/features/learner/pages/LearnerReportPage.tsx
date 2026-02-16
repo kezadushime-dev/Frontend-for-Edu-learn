@@ -143,7 +143,7 @@ export default function LearnerReportPage() {
   const finalFeedback = manualComment.trim() || automaticFeedback;
   const hasRequested = Boolean(request && (request.id || request.studentId));
   const status = hasRequested ? request?.status || 'PENDING' : 'PENDING';
-  const canDownload = hasRequested && status === 'APPROVED';
+  const canDownload = status === 'APPROVED' || !hasRequested;
   const generatedAt = request?.updatedAt || request?.createdAt || new Date().toISOString();
   const reportId = request?.id || `TEMP-${(user?._id || user?.id || 'LEARNER').slice(-6).toUpperCase()}`;
 
@@ -187,9 +187,9 @@ export default function LearnerReportPage() {
         window.URL.revokeObjectURL(fileUrl);
       }
 
-      setMessage('Report downloaded successfully.');
+      setMessage('Certificate downloaded successfully.');
     } catch (downloadError: unknown) {
-      const text = downloadError instanceof Error ? downloadError.message : 'Could not download report.';
+      const text = downloadError instanceof Error ? downloadError.message : 'Could not download certificate.';
       setError(text);
     } finally {
       setDownloading(false);
@@ -205,7 +205,7 @@ export default function LearnerReportPage() {
           { label: 'Home', to: '/' },
           { label: 'Lessons', to: '/lesson' },
           { label: 'Quiz', to: '/quiz' },
-          { label: 'Report Card', to: '/learner/report-card' }
+          { label: 'Certificate', to: '/learner/report-card' }
         ]}
       />
 
@@ -217,16 +217,16 @@ export default function LearnerReportPage() {
               { label: 'Overview', to: '/dashboard-learner' },
               { label: 'My Lessons', to: '/lesson' },
               { label: 'My Quizzes', to: '/quiz' },
-              { label: 'Report Card', active: true },
+              { label: 'Certificate', active: true },
             ]}
           />
 
           <div className="animate-fadeInUp">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
               <div>
-                <p className="text-primary uppercase font-semibold tracking-wider">Report Center</p>
-                <h1 className="text-4xl font-extrabold gradient-text">Student Academic Report</h1>
-                <p className="text-gray-600 mt-2">Preview your performance and request permission to download the official report.</p>
+                <p className="text-primary uppercase font-semibold tracking-wider">Certificate Center</p>
+                <h1 className="text-4xl font-extrabold gradient-text">Course Completion Certificate</h1>
+                <p className="text-gray-600 mt-2">Request approval and download your official certificate once it is approved.</p>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-500 font-medium">Status:</span>
@@ -234,7 +234,7 @@ export default function LearnerReportPage() {
               </div>
             </div>
 
-            {loading ? <p className="text-gray-500 text-sm mb-6">Loading report data...</p> : null}
+            {loading ? <p className="text-gray-500 text-sm mb-6">Loading certificate data...</p> : null}
             {error ? <p className="text-red-600 text-sm mb-6">{error}</p> : null}
             {message ? <p className="text-green-600 text-sm mb-6">{message}</p> : null}
 
@@ -247,7 +247,7 @@ export default function LearnerReportPage() {
                   </div>
                   <div>
                     <h2 className="text-3xl font-black tracking-wide">EDU LEARN</h2>
-                    <p className="text-sm uppercase tracking-[0.2em] text-blue-100">Student Academic Report</p>
+                    <p className="text-sm uppercase tracking-[0.2em] text-blue-100">Certificate of Completion</p>
                   </div>
                 </div>
               </div>
@@ -258,56 +258,23 @@ export default function LearnerReportPage() {
                   <InfoItem label="Course Name" value={courseName} />
                   <InfoItem label="Class/Level" value={getClassLevel(user)} />
                   <InfoItem label="School Year" value={getSchoolYearLabel()} />
-                  <InfoItem label="Report ID" value={reportId} />
-                  <InfoItem label="Date Generated" value={formatReportDate(generatedAt)} />
+                  <InfoItem label="Certificate ID" value={reportId} />
+                  <InfoItem label="Date Awarded" value={formatReportDate(generatedAt)} />
                 </section>
 
-                <section>
-                  <h3 className="text-lg font-bold text-[#0b3d91] mb-3">Academic Performance</h3>
-                  <div className="overflow-x-auto border border-gray-200 rounded-xl">
-                    <table className="w-full text-sm">
-                      <thead className="bg-blue-50">
-                        <tr>
-                          <th className="px-3 py-2 text-left font-bold uppercase text-xs">Subject</th>
-                          <th className="px-3 py-2 text-left font-bold uppercase text-xs">1st Term</th>
-                          <th className="px-3 py-2 text-left font-bold uppercase text-xs">2nd Term</th>
-                          <th className="px-3 py-2 text-left font-bold uppercase text-xs">3rd Term</th>
-                          <th className="px-3 py-2 text-left font-bold uppercase text-xs">Total</th>
-                          <th className="px-3 py-2 text-left font-bold uppercase text-xs">Grade</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {subjectRows.length === 0 ? (
-                          <tr>
-                            <td colSpan={6} className="px-3 py-6 text-center text-gray-500">
-                              No analytics data available yet.
-                            </td>
-                          </tr>
-                        ) : (
-                          subjectRows.map((row) => (
-                            <tr key={row.subject} className="border-t border-gray-100">
-                              <td className="px-3 py-2 font-medium">{row.subject}</td>
-                              <td className="px-3 py-2">{row.firstTerm}</td>
-                              <td className="px-3 py-2">{row.secondTerm}</td>
-                              <td className="px-3 py-2">{row.thirdTerm}</td>
-                              <td className="px-3 py-2 font-semibold">{row.total}</td>
-                              <td className="px-3 py-2 font-semibold">{row.grade}</td>
-                            </tr>
-                          ))
-                        )}
-                      </tbody>
-                    </table>
+                <section className="rounded-2xl border border-[#0b3d91]/20 bg-gradient-to-br from-white via-blue-50 to-amber-50 p-10 text-center">
+                  <p className="text-xs uppercase tracking-[0.3em] text-[#0b3d91] font-semibold">Certificate of Completion</p>
+                  <h3 className="mt-4 text-4xl font-black text-[#0b3d91]">Presented To</h3>
+                  <p className="mt-3 text-3xl font-bold text-[#0b3d91]">{user?.name || 'Learner'}</p>
+                  <p className="mt-4 text-sm text-gray-600">For successfully completing the course with excellent results</p>
+                  <p className="mt-3 text-2xl font-semibold text-gray-900">{courseName}</p>
+                  <div className="mt-8 flex flex-wrap items-center justify-center gap-6 text-sm text-gray-600">
+                    <span>Performance Level: {performanceLevel}</span>
+                    <span>Overall Average: {overallAverage}%</span>
                   </div>
                 </section>
 
                 <section className="grid md:grid-cols-2 gap-6">
-                  <div className="rounded-xl border border-blue-100 bg-blue-50 p-5">
-                    <p className="text-xs uppercase tracking-wider text-primary font-bold">Performance Summary</p>
-                    <p className="mt-2 text-2xl font-black text-[#0b3d91]">{overallAverage}%</p>
-                    <p className="mt-1 text-sm text-gray-700">Overall Average Score</p>
-                    <p className="mt-3 text-sm font-semibold text-[#0b3d91]">Performance Level: {performanceLevel}</p>
-                  </div>
-
                   <div className="rounded-xl border border-amber-200 bg-amber-50 p-5">
                     <p className="text-xs uppercase tracking-wider text-[#9a6b00] font-bold">Feedback</p>
                     <textarea
@@ -318,16 +285,16 @@ export default function LearnerReportPage() {
                     />
                     <p className="mt-2 text-xs text-gray-600">Leave blank to use auto-generated feedback.</p>
                   </div>
-                </section>
 
-                <section className="rounded-xl border border-gray-200 p-5">
-                  <p className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-3">Approval Section</p>
-                  <div className="grid md:grid-cols-3 gap-4 text-sm">
-                    <InfoItem label="Approved By" value={request?.approvedByName || 'Pending approval'} compact />
-                    <InfoItem label="Role" value={request?.approvedByRole || 'N/A'} compact />
-                    <InfoItem label="Approval Date" value={formatReportDate(request?.updatedAt || null)} compact />
+                  <div className="rounded-xl border border-gray-200 p-5">
+                    <p className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-3">Approval Section</p>
+                    <div className="grid gap-3 text-sm">
+                      <InfoItem label="Approved By" value={request?.approvedByName || 'Pending approval'} compact />
+                      <InfoItem label="Role" value={request?.approvedByRole || 'N/A'} compact />
+                      <InfoItem label="Approval Date" value={formatReportDate(request?.updatedAt || null)} compact />
+                    </div>
+                    <p className="mt-4 text-sm text-gray-700">{finalFeedback}</p>
                   </div>
-                  <p className="mt-4 text-sm text-gray-700">{finalFeedback}</p>
                 </section>
               </div>
             </div>
@@ -352,7 +319,7 @@ export default function LearnerReportPage() {
                 disabled={!canDownload || downloading}
                 className="border-2 border-primary text-primary px-6 py-3 rounded-md font-semibold hover:bg-primary hover:text-white transition disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                {downloading ? 'Preparing...' : 'Download Report'}
+                {downloading ? 'Preparing...' : 'Download Certificate'}
               </button>
 
               <Link

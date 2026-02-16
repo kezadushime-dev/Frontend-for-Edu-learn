@@ -1,3 +1,150 @@
+givenlearner/report-card find that route keep the report card route but make it code for this it should be a certificate and it should be downloadable 
+aslo givne thise are routes make srue that it downloads the pdf rn i request admin aproves and when i come back to my student dasjbaord i cant donwload it Learner
+PATCH/reports /request-downloadLearner requests report download
+ 
+
+Learner requests to download their report. Report status becomes "pending" and requires admin/instructor approval.
+Parameters
+Try it out
+No parameters
+ 
+Responses
+Code
+Description
+Links
+200
+Download request sent successfully
+Media typeapplication/json
+Controls Accept header.
+Example Value
+Schema
+{
+"status": "success",
+"message": "Download request sent. Waiting for approval."
+}
+No links
+401
+Unauthorized – user must be logged in
+No links
+403
+Forbidden – only learners can request download
+No links
+404
+Report not found
+Media typeapplication/json
+Example Value
+Schema
+{
+"status": "fail",
+"message": "Report not found"
+}
+
+GET/reports /downloadDownload approved learner report as PDF
+ 
+
+Returns the learner's report as a PDF file. Report must be approved by admin/instructor.
+Parameters
+Try it out
+No parameters
+ 
+Responses
+Code
+Description
+Links
+200
+PDF file generated successfully
+Media typeapplication/pdf
+Controls Accept header.
+Example Value
+Schema
+string
+No links
+401
+Unauthorized – user must be logged in
+No links
+403
+Report not approved yet
+Media typeapplication/json
+Example Value
+Schema
+{
+"status": "fail",
+"message": "Report not approved yet"
+}
+No links
+404
+Report not found
+Media typeapplication/json
+Example Value
+Schema
+{
+"status": "fail",
+"message": "Report not found"
+}
+ and this is logic to approve report PATCH
+/admin/reports/{id}/approve
+Approve a learner's report(admin and instructor)
+
+
+Admin or instructor approves a learner's report, allowing them to download it. Sets report status to "approved" and records who approved it.
+
+Parameters
+Try it out
+Name	Description
+id *
+string
+(path)
+Report ID to approve
+
+id
+Responses
+Code	Description	Links
+200	
+Report approved successfully
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "status": "success",
+  "message": "Report approved",
+  "data": {
+    "report": {}
+  }
+}
+No links
+401	
+Unauthorized – user must be logged in
+
+No links
+403	
+Forbidden – only admin or instructor can approve
+
+No links
+404	
+Report not found
+
+Media type
+
+application/json
+Example Value
+Schema
+{
+  "status": "fail",
+  "message": "Report not found"
+}
+
+
+
+
+
+
+
+
+
 import PDFDocument from "pdfkit";
 
 export const drawCertificateTemplate = (
@@ -124,4 +271,4 @@ export const drawCertificateTemplate = (
     .fontSize(16)
     .fillColor("#0A4DAD")
     .text("EDU LEARN", 0, pageHeight - paddingBottom, { align: "center" });
-};
+};`
