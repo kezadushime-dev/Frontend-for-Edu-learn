@@ -7,7 +7,6 @@ import {
   CalendarWidget,
   StatusBreakdownChart,
   TrendChart,
-  type AssignmentItem,
   type TrendPoint
 } from '../../../components/dashboard/OverviewWidgets';
 import { api } from '../../../shared/utils/api';
@@ -46,13 +45,6 @@ const monthKeyFromDate = (value: unknown) => {
   return `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, '0')}`;
 };
 
-const roleBadgeClass = (role: string) => {
-  const lower = role.toLowerCase();
-  if (lower === 'admin') return 'bg-rose-100 text-rose-700';
-  if (lower === 'instructor') return 'bg-blue-100 text-blue-700';
-  return 'bg-emerald-100 text-emerald-700';
-};
-
 export default function DashboardAdmin() {
   const toast = useToast();
   const [users, setUsers] = useState<any[]>([]);
@@ -62,17 +54,13 @@ export default function DashboardAdmin() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [error, setError] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showViewModal, setShowViewModal] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<any>(null);
   const [formData, setFormData] = useState({ name: '', email: '', password: '', role: 'learner' });
   const [creating, setCreating] = useState(false);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let mounted = true;
     const load = async () => {
       try {
-        setLoading(true);
         const analyticsRes = await api.quizzes.analytics().catch(() => ({ data: { analytics: [] } }));
         const [usersRes, lessonsRes, quizzesRes, statsRes] = await Promise.all([
           api.admin.users(),
@@ -98,8 +86,6 @@ export default function DashboardAdmin() {
       } catch (err: any) {
         if (!mounted) return;
         setError(err?.message || 'Failed to load dashboard.');
-      } finally {
-        if (mounted) setLoading(false);
       }
     };
     load();
@@ -156,7 +142,6 @@ export default function DashboardAdmin() {
   const publishedLessons = lessons.filter(i => i.isPublished !== false).length;
   const draftLessons = lessons.filter(i => i.isPublished === false).length;
   const activeQuizzes = quizzes.filter(i => i.isActive !== false).length;
-  const pausedQuizzes = quizzes.filter(i => i.isActive === false).length;
   const earnedCertificates = analytics.reduce((sum, item) => sum + (item.passed || 0), 0);
   const supportCount = users.length + analytics.reduce((sum, item) => sum + (item.attempts || 0), 0);
 
