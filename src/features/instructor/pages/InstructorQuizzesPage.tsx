@@ -1,10 +1,8 @@
-﻿import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { PrimaryNav, TopBar } from '../../../core/layout/LayoutPieces';
 import { Sidebar } from '../../../core/layout/Sidebars';
-import { AdminFormFields } from '../../../components/AdminFormFields';
 import { QuizCard } from '../../../components/ContentCard';
-import { uiStore } from '../../../shared/data/uiStore';
 import { api } from '../../../shared/utils/api';
 
 interface Quiz {
@@ -16,12 +14,10 @@ interface Quiz {
 }
 
 export default function InstructorQuizzes() {
+  const navigate = useNavigate();
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [editMode, setEditMode] = useState(false);
-  const [_selectedQuiz, setSelectedQuiz] = useState<any>(null);
-  const [formData, setFormData] = useState({});
 
   const fetchQuizzes = async () => {
     try {
@@ -39,18 +35,8 @@ export default function InstructorQuizzes() {
   }, []);
 
   const handleEdit = (quiz: any) => {
-    setSelectedQuiz(quiz);
-    setFormData(quiz);
-    setEditMode(true);
-  };
-
-  const handleSaveEdit = async () => {
-    try {
-      await api.quizzes.create(formData);
-      fetchQuizzes();
-      setEditMode(false);
-    } catch (err) {
-      alert('Failed to update quiz');
+    if (quiz?._id) {
+      navigate(`/instructor/quiz-edit/${quiz._id}`);
     }
   };
 
@@ -86,12 +72,12 @@ export default function InstructorQuizzes() {
           links={[
             { label: 'Overview', to: '/dashboard-manager' },
             { label: 'Manage Lessons', to: '/instructor/lessons' },
-              { label: 'Create Lesson', to: '/instructor/lesson-create' },
-              { label: 'Manage Quizzes', active: true },
-              { label: 'Create Quiz', to: '/instructor/quiz-create' },
-              { label: 'Report Requests', to: '/instructor/report-requests' },
-            ]}
-          />
+            { label: 'Create Lesson', to: '/instructor/lesson-create' },
+            { label: 'Manage Quizzes', active: true },
+            { label: 'Create Quiz', to: '/instructor/quiz-create' },
+            { label: 'Report Requests', to: '/instructor/report-requests' },
+          ]}
+        />
 
         <div>
           <div className="flex items-center justify-between mb-6">
@@ -104,28 +90,7 @@ export default function InstructorQuizzes() {
             </Link>
           </div>
 
-          {editMode && (
-            <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-              <h2 className="text-xl font-bold mb-4">Edit Quiz</h2>
-              <form onSubmit={(e) => { e.preventDefault(); handleSaveEdit(); }} className="grid gap-5">
-                <AdminFormFields
-                  fields={uiStore.forms.quizCreate}
-                  values={formData}
-                  onChange={(key, value) => setFormData({ ...formData, [key]: value })}
-                />
-                <div className="flex gap-3">
-                  <button type="submit" className="bg-primary text-white px-5 py-2 rounded-md font-semibold">
-                    Save Changes
-                  </button>
-                  <button type="button" onClick={() => setEditMode(false)} className="border-2 border-primary text-primary px-5 py-2 rounded-md font-semibold">
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            </div>
-          )}
-
-          {!loading && quizzes.length > 0 ? (
+          {quizzes.length > 0 ? (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {quizzes.map((quiz) => (
                 <QuizCard
@@ -150,5 +115,3 @@ export default function InstructorQuizzes() {
     </div>
   );
 }
-
-

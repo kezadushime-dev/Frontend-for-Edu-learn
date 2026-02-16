@@ -1,91 +1,173 @@
-﻿import { type FormEvent, useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { PrimaryNav, TopBar } from '../../../core/layout/LayoutPieces';
 import { Sidebar } from '../../../core/layout/Sidebars';
 import { api } from '../../../shared/utils/api';
+import { useToast } from '../../../shared/hooks/useToast';
 
-type QuestionForm = {
+type QuizQuestionForm = {
   questionText: string;
-  options: string;
-  correctOptionIndex: string;
-  points: string;
+  image: string;
+  options: string[];
+  optionImages: string[];
+  correctOptionIndex: number;
+  points: number;
 };
 
 export default function QuizEdit() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [quiz, setQuiz] = useState<any>(null);
+  const toast = useToast();
+  const [lessonName, setLessonName] = useState('');
   const [lessonId, setLessonId] = useState('');
+  const [lessons, setLessons] = useState<any[]>([]);
   const [title, setTitle] = useState('');
-  const [passingScore, setPassingScore] = useState('70');
-  const [isActive, setIsActive] = useState('true');
-  const [questions, setQuestions] = useState<QuestionForm[]>([]);
-  const [message, setMessage] = useState<{ text: string; type: 'error' | 'success' } | null>(null);
+  const [passingScore, setPassingScore] = useState(70);
+  const [isActive, setIsActive] = useState(true);
+  const [questionCount, setQuestionCount] = useState(1);
+  const [questions, setQuestions] = useState<QuizQuestionForm[]>([{
+    questionText: '',
+    image: '',
+    options: [''],
+    optionImages: [''],
+    correctOptionIndex: 0,
+    points: 1
+  }]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    const loadQuiz = async () => {
+    const fetchLessons = async () => {
       try {
-        const res = await api.quizzes.get(id!);
+        const res = await api.lessons.list();
+        setLessons(res.data.lessons);
+      } catch (err) {
+        console.error('Failed to fetch lessons');
+      }
+    };
+    fetchLessons();
+  }, []);
+
+  useEffect(() => {
+    const loadQuiz = async () => {
+      if (!id) return;
+      try {
+        const res = await api.quizzes.get(id);
         const quizData = res.data.quiz;
-        setQuiz(quizData);
-        setLessonId(quizData.lesson?._id || '');
-        setTitle(quizData.title);
-        setPassingScore(quizData.passingScore.toString());
-        setIsActive(quizData.isActive.toString());
-        const loadedQuestions = quizData.questions.map((q: any) => ({
-          questionText: q.questionText,
-          options: q.options.join(','),
-          correctOptionIndex: q.correctOptionIndex.toString(),
-          points: q.points.toString()
-        }));
-        console.log('Loaded quiz questions:', loadedQuestions);
+        const quizLesson = quizData.lesson;
+        const lessonTitle = quizLesson?.title || '';
+        const lessonKey = quizLesson?._id || quizLesson?.id || '';
+        const loadedQuestions = Array.isArray(quizData.questions) && quizData.questions.length
+          ? quizData.questions.map((q: any) => {
+            const options = Array.isArray(q.options) ? q.options : [];
+            const optionImages = Array.isArray(q.optionImages) ? q.optionImages : [];
+            const paddedOptionImages = options.map((_: string, index: number) => optionImages[index] || '');
+            return {
+              questionText: q.questionText || '',
+              image: q.image || '',
+              options: options.length ? options : [''],
+              optionImages: paddedOptionImages.length ? paddedOptionImages : [''],
+              correctOptionIndex: Number.isFinite(q.correctOptionIndex) ? q.correctOptionIndex : 0,
+              points: Number.isFinite(q.points) ? q.points : 1
+            };
+          })
+          : [{
+            questionText: '',
+            image: '',
+            options: [''],
+            optionImages: [''],
+            correctOptionIndex: 0,
+            points: 1
+          }];
+
+        setLessonName(lessonTitle);
+        setLessonId(lessonKey);
+        setTitle(quizData.title || '');
+        setPassingScore(Number(quizData.passingScore || 70));
+        setIsActive(quizData.isActive !== false);
+        setQuestionCount(loadedQuestions.length);
         setQuestions(loadedQuestions);
       } catch (err: any) {
-        setMessage({ text: err?.message || 'Failed to load quiz.', type: 'error' });
+        toast.error(err?.message || 'Failed to load quiz.');
       } finally {
         setLoading(false);
       }
     };
+
     loadQuiz();
-  }, [id]);
+  }, [id, toast]);
 
-  const updateQuestion = (index: number, key: keyof QuestionForm, value: string) => {
-    setQuestions((prev) => prev.map((q, i) => (i === index ? { ...q, [key]: value } : q)));
+  useEffect(() => {
+    if (lessonName) {
+      const found = lessons.find(l => l.title.toLowerCase().includes(lessonName.toLowerCase()));
+      if (found) {
+        setLessonId(found._id || found.id);
+      }
+    }
+  }, [lessonName, lessons]);
+
+  const handleQuestionCountChange = (count: number) => {
+    setQuestionCount(count);
+    const newQuestions = Array.from({ length: count }, (_, i) =>
+      questions[i] || {
+        questionText: '',
+        image: '',
+        options: [''],
+        optionImages: [''],
+        correctOptionIndex: 0,
+        points: 1
+      }
+    );
+    setQuestions(newQuestions);
   };
 
-  const addQuestion = () => {
-    setQuestions((prev) => [...prev, { questionText: '', options: '', correctOptionIndex: '0', points: '1' }]);
+  const updateQuestion = (index: number, field: keyof QuizQuestionForm, value: any) => {
+    const updated = [...questions];
+    updated[index] = { ...updated[index], [field]: value };
+    setQuestions(updated);
   };
 
-  const removeQuestion = (index: number) => {
-    setQuestions((prev) => prev.filter((_, i) => i !== index));
+  const addOption = (qIndex: number) => {
+    const updated = [...questions];
+    updated[qIndex].options.push('');
+    updated[qIndex].optionImages.push('');
+    setQuestions(updated);
   };
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const updateOption = (qIndex: number, oIndex: number, value: string) => {
+    const updated = [...questions];
+    updated[qIndex].options[oIndex] = value;
+    setQuestions(updated);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!id) return;
+    if (!lessonId) {
+      toast.error('Please select a valid lesson');
+      return;
+    }
     setSaving(true);
-    setMessage(null);
     try {
       const payload = {
         lesson: lessonId,
         title,
-        passingScore: Number(passingScore),
-        isActive: isActive === 'true',
         questions: questions.map((q) => ({
           questionText: q.questionText,
-          options: q.options.split(',').map((opt) => opt.trim()).filter(Boolean),
-          correctOptionIndex: Number(q.correctOptionIndex),
-          points: Number(q.points)
-        }))
+          image: q.image || undefined,
+          options: q.options.filter((o) => o.trim()),
+          optionImages: q.optionImages.filter((o) => o.trim()),
+          correctOptionIndex: q.correctOptionIndex,
+          points: q.points
+        })),
+        passingScore,
+        isActive
       };
-      console.log('Updating quiz with payload:', payload);
-      await api.quizzes.create(payload); // Assuming update uses same endpoint, or add update method
-      setMessage({ text: 'Quiz updated successfully.', type: 'success' });
-      window.setTimeout(() => navigate('/instructor/quizzes'), 600);
+      await api.quizzes.update(id, payload);
+      toast.success('Quiz updated successfully!');
+      navigate('/instructor/quizzes');
     } catch (err: any) {
-      setMessage({ text: err?.message || 'Failed to update quiz.', type: 'error' });
+      toast.error(err?.response?.data?.message || 'Failed to update quiz');
     } finally {
       setSaving(false);
     }
@@ -100,8 +182,8 @@ export default function QuizEdit() {
         variant="dashboard"
         items={[
           { label: 'Dashboard', to: '/dashboard-manager' },
-          { label: 'Lessons', to: '/instructor/lessons' },
-          { label: 'Quizzes', to: '/instructor/quizzes', className: 'text-primary font-semibold' }
+          { label: 'Quizzes', to: '/instructor/quizzes' },
+          { label: 'Edit Quiz', to: `/instructor/quiz-edit/${id}`, className: 'text-primary font-semibold' }
         ]}
       />
 
@@ -112,7 +194,7 @@ export default function QuizEdit() {
             { label: 'Overview', to: '/dashboard-manager' },
             { label: 'Manage Lessons', to: '/instructor/lessons' },
             { label: 'Create Lesson', to: '/instructor/lesson-create' },
-            { label: 'Manage Quizzes', active: true },
+            { label: 'Manage Quizzes', to: '/instructor/quizzes' },
             { label: 'Create Quiz', to: '/instructor/quiz-create' },
           ]}
         />
@@ -122,141 +204,149 @@ export default function QuizEdit() {
             <p className="text-primary uppercase font-semibold tracking-wider">PATCH /quizzes/{id}</p>
             <h1 className="text-3xl font-extrabold">Edit Quiz</h1>
             <p className="text-gray-600 mt-2">Update quiz details and questions.</p>
-            {quiz?.lesson && (
-              <p className="text-sm text-gray-500 mt-2">Lesson: {quiz.lesson.title}</p>
-            )}
           </div>
 
-          <form className="bg-white rounded-xl shadow-lg p-6 grid gap-5" onSubmit={handleSubmit}>
-            <div className="grid gap-4">
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-semibold">Lesson ID</label>
+          <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-lg p-6 space-y-6">
+            <div>
+              <label className="block text-sm font-semibold mb-2">Lesson Name</label>
+              <input
+                type="text"
+                value={lessonName}
+                onChange={(e) => setLessonName(e.target.value)}
+                className="w-full border rounded-md px-3 py-2"
+                placeholder="Type lesson name..."
+                list="lessons-list"
+                required
+              />
+              <datalist id="lessons-list">
+                {lessons.map((lesson) => (
+                  <option key={lesson._id || lesson.id} value={lesson.title} />
+                ))}
+              </datalist>
+              {lessonId && (
+                <p className="text-xs text-green-600 mt-1">? Lesson found (ID: {lessonId})</p>
+              )}
+            </div>
+            <div>
+              <label className="block text-sm font-semibold mb-2">Quiz Title</label>
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="w-full border rounded-md px-3 py-2"
+                required
+              />
+            </div>
+            <div className="grid md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-semibold mb-2">Number of Questions</label>
+                <select
+                  value={questionCount}
+                  onChange={(e) => handleQuestionCountChange(Number(e.target.value))}
+                  className="w-full border rounded-md px-3 py-2"
+                >
+                  {Array.from({ length: 20 }, (_, i) => i + 1).map((num) => (
+                    <option key={num} value={num}>{num} Question{num > 1 ? 's' : ''}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold mb-2">Passing Score (%)</label>
                 <input
-                  type="text"
-                  value={lessonId}
-                  onChange={(event) => setLessonId(event.target.value)}
-                  placeholder="Lesson ID"
+                  type="number"
+                  value={passingScore}
+                  onChange={(e) => setPassingScore(Number(e.target.value))}
+                  className="w-full border rounded-md px-3 py-2"
                   required
-                  className="p-3 text-gray-800 rounded-md border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/40"
                 />
               </div>
-
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-semibold">Title</label>
-                  <input
-                    type="text"
-                    value={title}
-                    onChange={(event) => setTitle(event.target.value)}
-                    placeholder="Quiz title"
-                    required
-                    className="p-3 text-gray-800 rounded-md border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/40"
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-semibold">Passing Score</label>
-                  <input
-                    type="number"
-                    value={passingScore}
-                    onChange={(event) => setPassingScore(event.target.value)}
-                    placeholder="70"
-                    className="p-3 text-gray-800 rounded-md border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/40"
-                  />
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <label htmlFor="isActive" className="text-sm font-semibold">Is Active</label>
+              <div>
+                <label className="block text-sm font-semibold mb-2">Active</label>
                 <select
-                  id="isActive"
-                  value={isActive}
-                  onChange={(event) => setIsActive(event.target.value)}
-                  className="p-3 text-gray-800 rounded-md border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  value={isActive.toString()}
+                  onChange={(e) => setIsActive(e.target.value === 'true')}
+                  className="w-full border rounded-md px-3 py-2"
                 >
-                  <option value="true">true</option>
-                  <option value="false">false</option>
+                  <option value="true">Yes</option>
+                  <option value="false">No</option>
                 </select>
               </div>
             </div>
 
-            <div className="border-t border-gray-200 pt-4">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold">Questions</h3>
-                <button type="button" onClick={addQuestion} className="text-primary font-semibold">
-                  Add Question
-                </button>
-              </div>
-              <div className="grid gap-4">
-                {questions.map((question, index) => (
-                  <div key={`q-${index}`} className="border border-gray-200 rounded-lg p-4 grid gap-3">
-                    <div className="flex items-center justify-between">
-                      <p className="font-semibold">Question {index + 1}</p>
-                      {questions.length > 1 ? (
-                        <button type="button" className="text-red-600 text-sm" onClick={() => removeQuestion(index)}>
-                          Remove
-                        </button>
-                      ) : null}
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <label className="text-sm font-semibold">Question Text</label>
+            <div className="border-t pt-6">
+              <h2 className="text-xl font-bold mb-4">Questions ({questionCount})</h2>
+              {questions.map((q, qIndex) => (
+                <div key={qIndex} className="border rounded-lg p-4 mb-4 bg-gray-50">
+                  <h3 className="font-semibold mb-3">Question {qIndex + 1}</h3>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm font-semibold mb-1">Question Text</label>
                       <input
                         type="text"
-                        value={question.questionText}
-                        onChange={(event) => updateQuestion(index, 'questionText', event.target.value)}
-                        placeholder="Question"
+                        value={q.questionText}
+                        onChange={(e) => updateQuestion(qIndex, 'questionText', e.target.value)}
+                        className="w-full border rounded-md px-3 py-2"
                         required
-                        className="p-3 text-gray-800 rounded-md border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/40"
                       />
                     </div>
-                    <div className="flex flex-col gap-2">
-                      <label className="text-sm font-semibold">Options (comma-separated)</label>
+                    <div>
+                      <label className="block text-sm font-semibold mb-1">Image URL (optional)</label>
                       <input
                         type="text"
-                        value={question.options}
-                        onChange={(event) => updateQuestion(index, 'options', event.target.value)}
-                        placeholder="A,B,C,D"
-                        required
-                        className="p-3 text-gray-800 rounded-md border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/40"
+                        value={q.image}
+                        onChange={(e) => updateQuestion(qIndex, 'image', e.target.value)}
+                        className="w-full border rounded-md px-3 py-2"
                       />
                     </div>
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div className="flex flex-col gap-2">
-                        <label className="text-sm font-semibold">Correct Option Index</label>
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="block text-sm font-semibold">Options</label>
+                        <button type="button" onClick={() => addOption(qIndex)} className="text-blue-600 text-sm font-semibold">+ Add Option</button>
+                      </div>
+                      {q.options.map((opt, oIndex) => (
+                        <input
+                          key={oIndex}
+                          type="text"
+                          value={opt}
+                          onChange={(e) => updateOption(qIndex, oIndex, e.target.value)}
+                          placeholder={`Option ${oIndex + 1}`}
+                          className="w-full border rounded-md px-3 py-2 mb-2"
+                          required
+                        />
+                      ))}
+                    </div>
+                    <div className="grid md:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-sm font-semibold mb-1">Correct Option Index</label>
                         <input
                           type="number"
-                          value={question.correctOptionIndex}
-                          onChange={(event) => updateQuestion(index, 'correctOptionIndex', event.target.value)}
-                          placeholder="0"
-                          className="p-3 text-gray-800 rounded-md border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/40"
+                          value={q.correctOptionIndex}
+                          onChange={(e) => updateQuestion(qIndex, 'correctOptionIndex', Number(e.target.value))}
+                          className="w-full border rounded-md px-3 py-2"
+                          required
                         />
                       </div>
-                      <div className="flex flex-col gap-2">
-                        <label className="text-sm font-semibold">Points</label>
+                      <div>
+                        <label className="block text-sm font-semibold mb-1">Points</label>
                         <input
                           type="number"
-                          value={question.points}
-                          onChange={(event) => updateQuestion(index, 'points', event.target.value)}
-                          placeholder="1"
-                          className="p-3 text-gray-800 rounded-md border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/40"
+                          value={q.points}
+                          onChange={(e) => updateQuestion(qIndex, 'points', Number(e.target.value))}
+                          className="w-full border rounded-md px-3 py-2"
+                          required
                         />
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
-
-            {message ? (
-              <p className={`text-sm ${message.type === 'error' ? 'text-red-600' : 'text-green-600'}`}>{message.text}</p>
-            ) : null}
 
             <div className="flex gap-3">
               <button type="submit" className="bg-primary text-white px-5 py-2 rounded-md font-semibold disabled:opacity-60" disabled={saving}>
                 {saving ? 'Saving...' : 'Save Changes'}
               </button>
-              <Link to="/instructor/quizzes" className="border-2 border-primary text-primary px-5 py-2 rounded-md font-semibold">
-                Cancel
-              </Link>
+              <Link to="/instructor/quizzes" className="border-2 border-primary text-primary px-5 py-2 rounded-md font-semibold">Cancel</Link>
             </div>
           </form>
         </div>
@@ -264,5 +354,3 @@ export default function QuizEdit() {
     </div>
   );
 }
-
-

@@ -1,0 +1,462 @@
+**route-by-route spec**  **what data each route displays/returns**, and **who can access it** (permissions). 
+
+---
+
+# Base URL
+
+`http://localhost:8008/api/v1`
+
+**Auth header (for protected routes):**
+`Authorization: Bearer <JWT>`
+
+---
+
+# 1) Admin Routes (`/admin/*`)
+
+**Rule:** JWT required + **Admin only**
+
+## GET `/admin/users`
+
+**Displays/Returns:** List of all users
+**Typical data shown in UI:** Users table (name, email, role, status, created date)
+
+**Response shape (typical):**
+
+* `[{ _id, name, email, role, isActive, createdAt }]`
+
+**Allowed:** ✅ Admin
+**Blocked:** ❌ Instructor, ❌ Learner, ❌ Public
+
+---
+
+## GET `/admin/users/{id}`
+
+**Displays/Returns:** Single user details
+**Typical UI:** User details page/modal
+
+**Response:**
+
+* `{ _id, name, email, role, isActive, createdAt, updatedAt }`
+
+**Allowed:** ✅ Admin only
+
+---
+
+## DELETE `/admin/users/{id}`
+
+**Displays/Returns:** Deletes a user
+**Typical UI:** “Delete user” button
+
+**Response:**
+
+* usually `204 No Content`
+
+**Allowed:** ✅ Admin only
+
+---
+
+## PATCH `/admin/users/{id}/role`
+
+**Displays/Returns:** Updates a user’s role
+**Typical UI:** Role dropdown change in users table
+
+**Body:**
+
+```json
+{ "role": "learner" | "instructor" | "admin" }
+```
+
+**Response:**
+
+* updated user or success message
+
+**Allowed:** ✅ Admin only
+
+---
+
+## GET `/admin/users/role/{role}`
+
+**Displays/Returns:** Users filtered by role
+**Typical UI:** Role filter tab or dropdown
+
+**Response:**
+
+* `[ { user... }, { user... } ]`
+
+**Allowed:** ✅ Admin only
+
+---
+
+## GET `/admin/statistics`
+
+**Displays/Returns:** Admin dashboard KPIs
+**Typical UI:** Stats cards on admin overview
+
+**Usually includes:**
+
+* `totalUsers`
+* `totalLessons`
+* `totalQuizzes`
+* maybe `activeUsers`, `attempts`, etc (depends on controller)
+
+**Allowed:** ✅ Admin only
+
+---
+
+# 2) Auth Routes (`/auth/*`)
+
+## POST `/auth/register`
+
+**Displays/Returns:** Creates a new user + (usually) returns token + user
+**Typical UI:** Signup page
+
+**Body:**
+
+```json
+{ "name": "...", "email": "...", "password": "..." }
+```
+
+**Response (typical):**
+
+* `{ token, user: { id, name, email, role } }`
+
+**Allowed:** ✅ Public
+
+---
+
+## POST `/auth/login`
+
+**Displays/Returns:** Logs in user (token + user)
+**Typical UI:** Login page
+
+**Body:**
+
+```json
+{ "email": "...", "password": "..." }
+```
+
+**Response (typical):**
+
+* `{ token, user: { id, name, email, role } }`
+
+**Allowed:** ✅ Public
+
+---
+
+## POST `/auth/logout`
+
+**Displays/Returns:** Logs out user
+**Typical UI:** Logout action
+
+**Response:**
+
+* `{ message: "Logged out" }` or `200 OK`
+
+**Allowed:** ✅ Any logged-in user (Admin/Instructor/Learner)
+
+---
+
+## GET `/auth/me`
+
+**Displays/Returns:** Current logged-in user profile
+**Typical UI:** After refresh, restore session + role
+
+**Response:**
+
+* `{ id, name, email, role, ... }`
+
+**Allowed:** ✅ Any logged-in user
+
+---
+
+## PATCH `/auth/me`
+
+**Displays/Returns:** Updates own profile (name/email, etc.)
+**Typical UI:** Profile settings
+
+**Body (any):**
+
+```json
+{ "name": "...", "email": "..." }
+```
+
+**Allowed:** ✅ Any logged-in user
+**Note:** role should NOT be editable here.
+
+---
+
+## PATCH `/auth/update-password`
+
+**Displays/Returns:** Change password while logged in
+**Typical UI:** Change password form
+
+**Body:**
+
+```json
+{ "currentPassword": "...", "newPassword": "..." }
+```
+
+**Allowed:** ✅ Any logged-in user
+
+---
+
+## POST `/auth/forgot-password`
+
+**Displays/Returns:** Requests reset flow
+**Typical UI:** Forgot password page
+
+**Body:**
+
+```json
+{ "email": "..." }
+```
+
+**Allowed:** ✅ Public
+
+---
+
+## PATCH `/auth/reset-password/{token}`
+
+**Displays/Returns:** Resets password using token
+**Typical UI:** Reset password page
+
+**Body:**
+
+```json
+{ "password": "..." }
+```
+
+**Allowed:** ✅ Public (token is the security)
+
+---
+
+## DELETE `/auth/delete-account`
+
+**Displays/Returns:** Deletes the currently logged-in account
+**Typical UI:** “Delete my account” button
+
+**Allowed:** ✅ Any logged-in user
+
+---
+
+# 3) Lesson Routes (`/lessons/*`)
+
+## GET `/lessons`
+
+**Displays/Returns:** List of all lessons
+**Typical UI:** Lessons page (cards/list)
+
+**Response (typical):**
+
+* `[{ _id, title, description, category, order, images, createdAt }]`
+
+**Allowed:** ✅ Public (everyone)
+
+---
+
+## GET `/lessons/{id}`
+
+**Displays/Returns:** Single lesson content
+**Typical UI:** Lesson view page
+
+**Response (typical):**
+
+* `{ _id, title, description, content, category, images, order }`
+
+**Allowed:** ✅ Public
+
+---
+
+## POST `/lessons`
+
+**Displays/Returns:** Creates lesson (supports file upload)
+**Typical UI:** “Create Lesson” form
+
+**Body:** `multipart/form-data`
+
+* `title`
+* `description`
+* `content`
+* `category`
+* `order` (optional)
+* `images[]` (up to 5)
+
+**Allowed:** ✅ Any logged-in user (as you currently described)
+**Recommended permission:** ✅ Instructor + Admin only
+
+---
+
+## PATCH `/lessons/{id}`
+
+**Displays/Returns:** Updates a lesson
+**Typical UI:** Edit lesson form
+
+**Body:** multipart/form-data (optional fields)
+
+**Allowed:** ✅ Any logged-in user (as currently described)
+**Recommended permission:** ✅ Instructor + Admin only
+
+---
+
+## DELETE `/lessons/{id}`
+
+**Displays/Returns:** Deletes a lesson
+**Typical UI:** Delete action
+
+**Allowed:** ✅ Any logged-in user (as currently described)
+**Recommended permission:** ✅ Instructor + Admin only
+
+---
+
+# 4) Quiz Routes (`/quizzes/*`)
+
+**Rule:** router uses protect → **all quizzes require JWT**
+
+## POST `/quizzes`
+
+**Displays/Returns:** Creates a new quiz
+**Typical UI:** Create quiz form
+
+**Body:**
+
+```json
+{
+  "lesson": "lessonId",
+  "title": "Quiz title",
+  "questions": [
+    {
+      "questionText": "...",
+      "options": ["...", "..."],
+      "correctOptionIndex": 0,
+      "points": 1,
+      "image": "optional",
+      "optionImages": ["optional"]
+    }
+  ],
+  "passingScore": 70,
+  "isActive": true
+}
+```
+
+**Allowed:** ✅ Instructor, ✅ Admin
+**Blocked:** ❌ Learner, ❌ Public
+
+---
+
+## GET `/quizzes`
+
+**Displays/Returns:** List all quizzes
+**Typical UI:** Quizzes page (quiz cards list)
+
+**Response (typical):**
+
+* `[{ _id, lesson, title, passingScore, isActive }]`
+
+**Allowed:** ✅ Any logged-in user
+
+---
+
+## GET `/quizzes/{id}`
+
+**Displays/Returns:** Single quiz (with questions)
+**Typical UI:** Quiz start/take page
+
+**Response (typical):**
+
+* `{ _id, title, lesson, questions: [...], passingScore }`
+
+**Allowed:** ✅ Any logged-in user
+
+---
+
+## PATCH `/quizzes/{id}`
+
+**Displays/Returns:** Update quiz
+**Typical UI:** Edit quiz form
+
+**Allowed:** ✅ Instructor, ✅ Admin
+
+---
+
+## DELETE `/quizzes/{id}`
+
+**Displays/Returns:** Delete quiz
+**Allowed:** ✅ Instructor, ✅ Admin
+
+---
+
+## GET `/quizzes/analytics`
+
+**Displays/Returns:** Quiz analytics (avg score, pass rate, attempts)
+**Typical UI:** Instructor/Admin analytics dashboard
+
+**Allowed:** ✅ Instructor, ✅ Admin
+**Blocked:** ❌ Learner
+
+**Important routing fix:** this must be defined **before** `/quizzes/:id`, or it will get captured as `id="analytics"`.
+
+---
+
+## GET `/quizzes/lesson/{lessonId}`
+
+**Displays/Returns:** Quiz by lesson
+**Typical UI:** On lesson page show quizzes for that lesson
+
+**Allowed:** ✅ Any logged-in user
+
+---
+
+## POST `/quizzes/{id}/submit`
+
+**Displays/Returns:** Submit quiz answers + auto-grade result
+**Typical UI:** Submit button → results screen
+
+**Body:**
+
+```json
+{
+  "answers": [
+    { "selectedOptionIndex": 1 },
+    { "selectedOptionIndex": 0 }
+  ]
+}
+```
+
+**Response (typical):**
+
+* `{ score, percentage, passed, correctCount, totalQuestions }`
+* sometimes also per-question feedback
+
+**Allowed:** ✅ Any logged-in user
+
+---
+
+# Role matrix (quick view)
+
+* **Public (not logged in):**
+
+  * ✅ GET `/lessons`, GET `/lessons/:id`
+  * ✅ auth register/login/forgot/reset
+
+* **Learner (logged in):**
+
+  * ✅ `/auth/me`, `/auth/me` PATCH, update-password, logout, delete-account
+  * ✅ GET `/quizzes`, GET `/quizzes/:id`, GET `/quizzes/lesson/:lessonId`, POST `/quizzes/:id/submit`
+  * ✅ Lessons CRUD only if your backend allows it (currently “protected” but not role restricted)
+
+* **Instructor:**
+
+  * ✅ everything learner can do
+  * ✅ create/update/delete quizzes
+  * ✅ analytics
+
+* **Admin:**
+
+  * ✅ everything
+  * ✅ all `/admin/*`
+
+---
+
+**Q1:** Do you want lessons POST/PATCH/DELETE to be **instructor+admin only** (recommended) or keep “any logged in user”?
+**Q2:** Should learners be allowed to see `/quizzes/:id` questions before unlocking the lesson (gating)?
+**Q3:** For analytics, do you want it to be per-quiz, per-lesson, or global stats?
