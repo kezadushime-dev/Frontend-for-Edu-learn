@@ -193,30 +193,21 @@ export default function DashboardLearner() {
                 <div className="grid lg:grid-cols-2 gap-6 mt-8">
                   <div className="bg-white rounded-xl p-6 shadow-lg">
                     <h3 className="text-xl font-bold mb-4">Latest Lessons</h3>
-                    <div className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {lessons.slice(0, 4).map((lesson) => (
-                        <div key={lesson._id} className="flex items-center justify-between border-b border-gray-50 pb-2">
-                          <div>
-                            <p className="text-sm font-medium">{lesson.title}</p>
-                            <p className="text-xs text-gray-400">{lesson.category}</p>
-                          </div>
-                          <Link to={`/lesson/${lesson._id}`} className="text-primary text-sm font-semibold hover:underline">Start</Link>
-                        </div>
+                        <LessonCard key={lesson._id} lesson={lesson} />
                       ))}
-                      {lessons.length === 0 ? <p className="text-sm text-gray-500">No lessons available.</p> : null}
+                      {lessons.length === 0 ? <p className="text-sm text-gray-500 col-span-2">No lessons available.</p> : null}
                     </div>
                   </div>
 
                   <div className="bg-white rounded-xl p-6 shadow-lg">
                     <h3 className="text-xl font-bold mb-4">Upcoming Quizzes</h3>
-                    <div className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {quizzes.slice(0, 4).map((quiz) => (
-                        <div key={quiz._id} className="flex items-center justify-between border-b border-gray-50 pb-2">
-                          <span className="text-sm font-medium">{quiz.title}</span>
-                          <Link to={`/quiz/${quiz._id}`} className="bg-blue-50 text-primary px-3 py-1 rounded text-xs font-bold hover:bg-primary hover:text-white transition">Take Quiz</Link>
-                        </div>
+                        <QuizCard key={quiz._id} quiz={quiz} />
                       ))}
-                      {quizzes.length === 0 ? <p className="text-sm text-gray-500">No quizzes available.</p> : null}
+                      {quizzes.length === 0 ? <p className="text-sm text-gray-500 col-span-2">No quizzes available.</p> : null}
                     </div>
                   </div>
                 </div>
@@ -269,6 +260,155 @@ function StatCard({ title, value, note, noteColor = "text-gray-500" }: { title: 
       <h3 className="text-3xl font-bold mt-2">{value}</h3>
       <p className={`text-xs mt-2 ${noteColor}`}>{note}</p>
     </div>
+  );
+}
+
+// Lesson Card Component
+function LessonCard({ lesson }: { lesson: Lesson & { description?: string; content?: string; images?: string[] } }) {
+  // Generate a placeholder image based on category or use a default
+  const placeholderImages = [
+    'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=200&fit=crop',
+    'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=400&h=200&fit=crop',
+    'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400&h=200&fit=crop',
+    'https://images.unsplash.com/photo-1504639725590-34d0984388bd?w=400&h=200&fit=crop',
+    'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=400&h=200&fit=crop'
+  ];
+  const imageIndex = lesson.title.charCodeAt(0) % placeholderImages.length;
+  const imageUrl = lesson.images?.[0] || placeholderImages[imageIndex];
+  
+  // Estimate reading time based on content length (roughly 200 words per minute)
+  const contentLength = lesson.content?.length || 0;
+  const estimatedMinutes = Math.max(1, Math.ceil(contentLength / 300));
+  const estimatedHours = estimatedMinutes >= 60 ? `${Math.floor(estimatedMinutes / 60)}h ${estimatedMinutes % 60}m` : `${estimatedMinutes}m`;
+
+  return (
+    <Link to={`/lesson/${lesson._id}`} className="block group">
+      <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100">
+        {/* Image */}
+        <div className="h-32 overflow-hidden">
+          <img 
+            src={imageUrl} 
+            alt={lesson.title}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          />
+        </div>
+        
+        {/* Content */}
+        <div className="p-4">
+          {/* Category Badge */}
+          <span className="inline-block px-2 py-1 text-xs font-semibold bg-blue-100 text-blue-700 rounded-full mb-2">
+            {lesson.category}
+          </span>
+          
+          {/* Title */}
+          <h4 className="font-bold text-gray-800 text-sm mb-2 line-clamp-2 group-hover:text-primary transition-colors">
+            {lesson.title}
+          </h4>
+          
+          {/* Description */}
+          {lesson.description && (
+            <p className="text-xs text-gray-500 line-clamp-2 mb-2">
+              {lesson.description}
+            </p>
+          )}
+          
+          {/* Meta Info */}
+          <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+            <div className="flex items-center gap-1 text-xs text-gray-500">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>{estimatedHours}</span>
+            </div>
+            <span className="text-primary text-xs font-semibold group-hover:underline">
+              Start →
+            </span>
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+// Quiz Card Component
+function QuizCard({ quiz }: { quiz: Quiz & { passingScore?: number; questions?: { length: number }[]; lessonTitle?: string } }) {
+  // Generate a placeholder image based on title
+  const placeholderImages = [
+    'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=400&h=200&fit=crop',
+    'https://images.unsplash.com/photo-1516321497487-e288fb19713f?w=400&h=200&fit=crop',
+    'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=200&fit=crop',
+    'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=400&h=200&fit=crop',
+    'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400&h=200&fit=crop'
+  ];
+  const imageIndex = quiz.title.charCodeAt(0) % placeholderImages.length;
+  const imageUrl = placeholderImages[imageIndex];
+  
+  // Get questions count - handle different possible structures
+  const questionsCount = Array.isArray(quiz.questions) ? quiz.questions.length : 0;
+  
+  // Estimate time based on questions (assume 2 minutes per question)
+  const estimatedMinutes = questionsCount * 2;
+  const estimatedHours = estimatedMinutes >= 60 ? `${Math.floor(estimatedMinutes / 60)}h ${estimatedMinutes % 60}m` : `${estimatedMinutes}m`;
+
+  return (
+    <Link to={`/quiz/${quiz._id}`} className="block group">
+      <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100">
+        {/* Image */}
+        <div className="h-32 overflow-hidden">
+          <img 
+            src={imageUrl} 
+            alt={quiz.title}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          />
+        </div>
+        
+        {/* Content */}
+        <div className="p-4">
+          {/* Category Badge - use lesson title or default */}
+          <span className="inline-block px-2 py-1 text-xs font-semibold bg-purple-100 text-purple-700 rounded-full mb-2">
+            {quiz.lessonTitle || quiz.lesson || 'Assessment'}
+          </span>
+          
+          {/* Title */}
+          <h4 className="font-bold text-gray-800 text-sm mb-2 line-clamp-2 group-hover:text-primary transition-colors">
+            {quiz.title}
+          </h4>
+          
+          {/* Quiz Info */}
+          <div className="flex gap-3 text-xs text-gray-500 mb-2">
+            {questionsCount > 0 && (
+              <span className="flex items-center gap-1">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                {questionsCount} Qs
+              </span>
+            )}
+            {quiz.passingScore && (
+              <span className="flex items-center gap-1">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                {quiz.passingScore}%
+              </span>
+            )}
+          </div>
+          
+          {/* Meta Info */}
+          <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+            <div className="flex items-center gap-1 text-xs text-gray-500">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>{estimatedHours}</span>
+            </div>
+            <span className="bg-primary text-white px-3 py-1 rounded-full text-xs font-semibold group-hover:bg-blue-700 transition-colors">
+              Take Quiz
+            </span>
+          </div>
+        </div>
+      </div>
+    </Link>
   );
 }
 
