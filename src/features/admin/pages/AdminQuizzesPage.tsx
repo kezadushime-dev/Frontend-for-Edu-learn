@@ -1,8 +1,8 @@
-﻿import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { PrimaryNav, TopBar } from '../../../core/layout/LayoutPieces';
 import { Sidebar } from '../../../core/layout/Sidebars';
-import { AdminTable } from '../../../components/AdminTable';
+import { QuizCard } from '../../../components/ContentCard';
 import { api } from '../../../shared/utils/api';
 import { useToast } from '../../../shared/hooks/useToast';
 
@@ -15,9 +15,11 @@ type QuizRow = {
   questions?: unknown[];
   passingScore?: number;
   isActive?: boolean;
+  createdAt?: string;
 };
 
 export default function AdminQuizzesPage() {
+  const navigate = useNavigate();
   const toast = useToast();
   const [quizzes, setQuizzes] = useState<QuizRow[]>([]);
   const [error, setError] = useState('');
@@ -47,11 +49,12 @@ export default function AdminQuizzesPage() {
 
   const deleteQuiz = async (id: string) => {
     if (!window.confirm('Are you sure you want to delete this quiz?')) return;
+    if (saving === id) return;
 
     setSaving(id);
     try {
       await api.quizzes.delete(id);
-      setQuizzes((prev) => prev.filter((quiz) => quiz._id !== id));
+      setQuizzes((prev) => prev.filter((quiz) => String(quiz._id || quiz.id) !== id));
       toast.success('Quiz deleted.');
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to delete quiz.';
@@ -61,18 +64,6 @@ export default function AdminQuizzesPage() {
       setSaving('');
     }
   };
-
-  const rows = quizzes.map((quiz) => ({
-    ...quiz,
-    _id: quiz._id || quiz.id,
-    lesson: typeof quiz.lesson === 'string' ? quiz.lesson : quiz.lesson?.title || '—',
-    createdBy:
-      typeof quiz.createdBy === 'string'
-        ? quiz.createdBy
-        : quiz.createdBy?.name || quiz.createdBy?.email || '—',
-    questions: Array.isArray(quiz.questions) ? quiz.questions.length : 0,
-    status: quiz.isActive === false ? 'Inactive' : 'Active'
-  }));
 
   return (
     <div className="bg-[#f5f8ff] text-slate-800">
@@ -113,41 +104,35 @@ export default function AdminQuizzesPage() {
 
           {error ? <p className="text-red-600 text-sm mb-4">{error}</p> : null}
 
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <AdminTable
-              columns={[
-                { key: 'title', label: 'Title' },
-                { key: 'lesson', label: 'Lesson' },
-                { key: 'questions', label: 'Questions' },
-                { key: 'passingScore', label: 'Passing Score' },
-                { key: 'status', label: 'Status' }
-              ]}
-              rows={rows}
-              renderActions={(row) => {
-                const id = String(row._id || row.id || '');
+          {quizzes.length > 0 ? (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {quizzes.map((quiz) => {
+                const id = String(quiz._id || quiz.id || '');
+                const lessonTitle = typeof quiz.lesson === 'string' ? quiz.lesson : quiz.lesson?.title || 'Lesson';
                 return (
-                  <div className="flex items-center gap-3">
-                    <Link to={`/admin/quizzes/${id}`} className="text-primary font-semibold text-sm hover:underline">
-                      View
-                    </Link>
-                    <Link to={`/quiz-edit/${id}`} className="text-blue-600 font-semibold text-sm hover:underline">
-                      Edit
-                    </Link>
-                    <button
-                      className="text-red-600 font-semibold text-sm"
-                      onClick={() => deleteQuiz(id)}
-                      disabled={saving === id}
-                    >
-                      {saving === id ? 'Deleting...' : 'Delete'}
-                    </button>
-                  </div>
+                  <QuizCard
+                    key={id}
+                    id={id}
+                    title={quiz.title || 'Untitled Quiz'}
+                    passingScore={quiz.passingScore}
+                    isActive={quiz.isActive}
+                    createdAt={quiz.createdAt}
+                    lessonTitle={lessonTitle}
+                    questions={Array.isArray(quiz.questions) ? quiz.questions : []}
+                    viewLink={`/admin/quizzes/${id}`}
+                    onEdit={() => navigate(`/quiz-edit/${id}`)}
+                    onDelete={(targetId) => deleteQuiz(targetId)}
+                  />
                 );
-              }}
-            />
-          </div>
+              })}
+            </div>
+          ) : (
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <div className="py-12 text-center text-gray-500">No quizzes found</div>
+            </div>
+          )}
         </div>
       </section>
     </div>
   );
 }
-

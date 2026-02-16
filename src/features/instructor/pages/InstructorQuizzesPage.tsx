@@ -51,7 +51,6 @@ export default function InstructorQuizzes() {
     }
   };
 
-  if (loading) return <div>Loading...</div>;
   if (error) return <div>{error}</div>;
 
   return (
@@ -106,11 +105,11 @@ export default function InstructorQuizzes() {
                 />
               ))}
             </div>
-          ) : (
+          ) : !loading ? (
             <div className="bg-white rounded-xl shadow-lg p-6">
               <div className="py-12 text-center text-gray-500">No quizzes found</div>
             </div>
-          )}
+          ) : null}
         </div>
       </section>
     </div>
