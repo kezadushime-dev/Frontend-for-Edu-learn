@@ -87,7 +87,6 @@ export default function LessonEdit() {
             { label: 'Create Lesson', to: '/instructor/lesson-create' },
             { label: 'Manage Quizzes', to: '/instructor/quizzes' },
             { label: 'Create Quiz', to: '/instructor/quiz-create' },
-            { label: 'Logout', to: '/login' }
           ]}
         />
 

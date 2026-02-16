@@ -94,7 +94,6 @@ export default function Lesson() {
               { label: 'My Lessons', active: true },
               { label: 'My Quizzes', to: '/quiz' },
               { label: 'Report Card', to: '/learner/report-card' },
-              { label: 'Logout', to: '/login' }
             ]}
           />
 

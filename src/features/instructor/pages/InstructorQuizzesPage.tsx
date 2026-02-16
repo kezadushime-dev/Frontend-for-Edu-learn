@@ -91,7 +91,6 @@ export default function InstructorQuizzes() {
               { label: 'Manage Quizzes', active: true },
               { label: 'Create Quiz', to: '/instructor/quiz-create' },
               { label: 'Report Requests', to: '/instructor/report-requests' },
-              { label: 'Logout', to: '/login' }
             ]}
           />
 

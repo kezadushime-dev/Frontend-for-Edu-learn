@@ -287,7 +287,6 @@ export default function Quiz() {
               { label: 'My Lessons', to: '/lesson' },
               { label: 'My Quizzes', active: true },
               { label: 'Report Card', to: '/learner/report-card' },
-              { label: 'Logout', to: '/login' }
             ]}
           />
 

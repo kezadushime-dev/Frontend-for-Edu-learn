@@ -113,7 +113,6 @@ export default function AdminReportRequestsPage() {
             { label: 'Manage Lessons', to: '/admin-lessons' },
             { label: 'Manage Quizzes', to: '/admin-quizzes' },
             { label: 'Report Requests', active: true },
-            { label: 'Logout', to: '/login' }
           ]}
         />
 

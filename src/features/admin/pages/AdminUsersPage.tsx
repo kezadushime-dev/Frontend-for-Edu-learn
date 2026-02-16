@@ -109,7 +109,6 @@ export default function AdminUsers() {
           { label: 'Users', to: '/admin-users', className: 'text-primary font-semibold' },
           { label: 'Lessons', to: '/admin-lessons' },
           { label: 'Quizzes', to: '/admin-quizzes' },
-          { label: 'Attempts', to: '/admin-quiz-attempts' },
           { label: 'Reports', to: '/admin/report-requests' }
         ]}
       />
@@ -122,9 +121,7 @@ export default function AdminUsers() {
             { label: 'Manage Users', active: true },
             { label: 'Manage Lessons', to: '/admin-lessons' },
             { label: 'Manage Quizzes', to: '/admin-quizzes' },
-            { label: 'Quiz Attempts', to: '/admin-quiz-attempts' },
             { label: 'Report Requests', to: '/admin/report-requests' },
-            { label: 'Logout', to: '/login' }
           ]}
         />
 
