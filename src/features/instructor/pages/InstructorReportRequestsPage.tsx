@@ -112,7 +112,6 @@ export default function InstructorReportRequestsPage() {
               { label: 'Manage Lessons', to: '/instructor/lessons' },
               { label: 'Manage Quizzes', to: '/instructor/quizzes' },
               { label: 'Report Requests', active: true },
-              { label: 'Logout', to: '/login' }
             ]}
           />
 

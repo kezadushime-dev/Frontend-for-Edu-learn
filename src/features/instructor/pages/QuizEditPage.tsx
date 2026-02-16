@@ -114,7 +114,6 @@ export default function QuizEdit() {
             { label: 'Create Lesson', to: '/instructor/lesson-create' },
             { label: 'Manage Quizzes', active: true },
             { label: 'Create Quiz', to: '/instructor/quiz-create' },
-            { label: 'Logout', to: '/login' }
           ]}
         />
 

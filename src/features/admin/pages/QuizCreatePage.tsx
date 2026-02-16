@@ -82,8 +82,6 @@ export default function QuizCreate() {
             { label: 'Manage Users', to: '/admin/users' },
             { label: 'Manage Lessons', to: '/admin/lessons' },
             { label: 'Manage Quizzes', to: '/admin/quizzes' },
-            { label: 'Quiz Attempts', to: '/admin/quiz-attempts' },
-            { label: 'Logout', to: '/login' }
           ]}
         />
 

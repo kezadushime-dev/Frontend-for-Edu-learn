@@ -84,7 +84,6 @@ export default function AdminQuizzesPage() {
           { label: 'Users', to: '/admin-users' },
           { label: 'Lessons', to: '/admin-lessons' },
           { label: 'Quizzes', to: '/admin-quizzes', className: 'text-primary font-semibold' },
-          { label: 'Attempts', to: '/admin-quiz-attempts' },
           { label: 'Reports', to: '/admin/report-requests' }
         ]}
       />
@@ -97,9 +96,7 @@ export default function AdminQuizzesPage() {
             { label: 'Manage Users', to: '/admin-users' },
             { label: 'Manage Lessons', to: '/admin-lessons' },
             { label: 'Manage Quizzes', active: true },
-            { label: 'Quiz Attempts', to: '/admin-quiz-attempts' },
             { label: 'Report Requests', to: '/admin/report-requests' },
-            { label: 'Logout', to: '/login' }
           ]}
         />
 

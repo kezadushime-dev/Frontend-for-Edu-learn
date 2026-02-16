@@ -129,7 +129,6 @@ export default function InstructorQuizCreate() {
             { label: 'Create Lesson', to: '/instructor/lesson-create' },
             { label: 'Manage Quizzes', to: '/instructor/quizzes' },
             { label: 'Create Quiz', active: true },
-            { label: 'Logout', to: '/login' }
           ]}
         />
 

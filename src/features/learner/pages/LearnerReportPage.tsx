@@ -218,7 +218,6 @@ export default function LearnerReportPage() {
               { label: 'My Lessons', to: '/lesson' },
               { label: 'My Quizzes', to: '/quiz' },
               { label: 'Report Card', active: true },
-              { label: 'Logout', to: '/login' }
             ]}
           />
 

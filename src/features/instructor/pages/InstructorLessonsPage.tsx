@@ -99,7 +99,6 @@ export default function InstructorLessons() {
               { label: 'Manage Quizzes', to: '/instructor/quizzes' },
               { label: 'Create Quiz', to: '/instructor/quiz-create' },
               { label: 'Report Requests', to: '/instructor/report-requests' },
-              { label: 'Logout', to: '/login' }
             ]}
           />
 
