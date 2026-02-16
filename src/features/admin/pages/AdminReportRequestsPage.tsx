@@ -79,7 +79,7 @@ export default function AdminReportRequestsPage() {
           { label: 'Users', to: '/admin-users' },
           { label: 'Lessons', to: '/admin-lessons' },
           { label: 'Quizzes', to: '/admin-quizzes' },
-          { label: 'Reports', to: '/admin/report-requests', className: 'text-primary font-semibold' }
+          { label: 'Certificates', to: '/admin/report-requests', className: 'text-primary font-semibold' }
         ]}
       />
 
@@ -91,7 +91,7 @@ export default function AdminReportRequestsPage() {
             { label: 'Manage Users', to: '/admin-users' },
             { label: 'Manage Lessons', to: '/admin-lessons' },
             { label: 'Manage Quizzes', to: '/admin-quizzes' },
-            { label: 'Report Requests', active: true },
+            { label: 'Certificate Requests', active: true },
           ]}
         />
 
@@ -99,8 +99,8 @@ export default function AdminReportRequestsPage() {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
             <div>
               <p className="text-primary uppercase font-semibold tracking-wider">/admin/report-requests</p>
-              <h1 className="text-4xl font-extrabold gradient-text">Report Permission Workflow</h1>
-              <p className="text-gray-600 mt-2">Administrative approval queue for learner report downloads.</p>
+              <h1 className="text-4xl font-extrabold gradient-text">Certificate Approval Workflow</h1>
+              <p className="text-gray-600 mt-2">Administrative approval queue for learner certificate downloads.</p>
             </div>
             <div>
               <select

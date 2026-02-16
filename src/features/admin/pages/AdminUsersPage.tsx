@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { PrimaryNav, TopBar } from '../../../core/layout/LayoutPieces';
 import { Sidebar } from '../../../core/layout/Sidebars';
 import { AdminTable } from '../../../components/AdminTable';
@@ -126,7 +126,7 @@ export default function AdminUsers() {
           { label: 'Users', to: '/admin-users', className: 'text-primary font-semibold' },
           { label: 'Lessons', to: '/admin-lessons' },
           { label: 'Quizzes', to: '/admin-quizzes' },
-          { label: 'Reports', to: '/admin/report-requests' }
+          { label: 'Certificates', to: '/admin/report-requests' }
         ]}
       />
 
@@ -138,7 +138,7 @@ export default function AdminUsers() {
             { label: 'Manage Users', active: true },
             { label: 'Manage Lessons', to: '/admin-lessons' },
             { label: 'Manage Quizzes', to: '/admin-quizzes' },
-            { label: 'Report Requests', to: '/admin/report-requests' },
+            { label: 'Certificate Requests', to: '/admin/report-requests' },
           ]}
         />
 
