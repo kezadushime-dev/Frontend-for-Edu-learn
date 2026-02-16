@@ -156,7 +156,7 @@ export default function DashboardAdmin() {
           { label: 'Users', to: '/admin-users' },
           { label: 'Lessons', to: '/admin-lessons' },
           { label: 'Quizzes', to: '/admin-quizzes' },
-          { label: 'Reports', to: '/admin/report-requests' }
+          { label: 'Certificates', to: '/admin/report-requests' }
         ]}
       />
 
@@ -168,7 +168,7 @@ export default function DashboardAdmin() {
             { label: 'Manage Users', to: '/admin-users' },
             { label: 'Manage Lessons', to: '/admin-lessons' },
             { label: 'Manage Quizzes', to: '/admin-quizzes' },
-            { label: 'Report Requests', to: '/admin/report-requests' },
+            { label: 'Certificate Requests', to: '/admin/report-requests' },
           ]}
         />
 

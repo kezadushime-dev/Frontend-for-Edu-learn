@@ -1,11 +1,11 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { PrimaryNav, TopBar } from '../../../core/layout/LayoutPieces';
 import { Sidebar } from '../../../core/layout/Sidebars';
 import { api } from '../../../shared/utils/api';
 
 const formatDate = (value?: string) => {
-  if (!value) return 'â€”';
+  if (!value) return '—';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleString();
@@ -54,7 +54,7 @@ export default function AdminLessonView() {
           { label: 'Users', to: '/admin-users' },
           { label: 'Lessons', to: '/admin-lessons', className: 'text-primary font-semibold' },
           { label: 'Quizzes', to: '/admin-quizzes' },
-          { label: 'Reports', to: '/admin/report-requests' }
+          { label: 'Certificates', to: '/admin/report-requests' }
         ]}
       />
 
@@ -66,7 +66,7 @@ export default function AdminLessonView() {
             { label: 'Manage Users', to: '/admin-users' },
             { label: 'Manage Lessons', active: true },
             { label: 'Manage Quizzes', to: '/admin-quizzes' },
-            { label: 'Report Requests', to: '/admin/report-requests' },
+            { label: 'Certificate Requests', to: '/admin/report-requests' },
           ]}
         />
 
@@ -94,15 +94,15 @@ export default function AdminLessonView() {
                 <div className="grid md:grid-cols-2 gap-4 text-sm">
                   <div>
                     <p className="text-gray-500">Title</p>
-                    <p className="font-semibold">{lesson.title || 'â€”'}</p>
+                    <p className="font-semibold">{lesson.title || '—'}</p>
                   </div>
                   <div>
                     <p className="text-gray-500">Category</p>
-                    <p className="font-semibold">{lesson.category || 'â€”'}</p>
+                    <p className="font-semibold">{lesson.category || '—'}</p>
                   </div>
                   <div>
                     <p className="text-gray-500">Created By</p>
-                    <p className="font-semibold">{lesson.instructor?.name || lesson.createdBy || 'â€”'}</p>
+                    <p className="font-semibold">{lesson.instructor?.name || lesson.createdBy || '—'}</p>
                   </div>
                   <div>
                     <p className="text-gray-500">Status</p>

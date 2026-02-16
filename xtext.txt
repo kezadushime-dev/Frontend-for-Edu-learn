@@ -1,0 +1,9 @@
+<ProfileHeader />
+[plugin:vite:import-analysis] Failed to resolve import "@tanstack/react-query" from "src/main.tsx". Does the file exist?
+C:/Users/v/Desktop/manzi/src/main.tsx:3:49
+2  |  import { StrictMode } from "react";
+3  |  import { createRoot } from "react-dom/client";
+4  |  import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+   |                                                    ^
+5  |  import { BrowserRouter } from "react-router-dom";
+6  |  import "./styles/index.css";

@@ -136,6 +136,11 @@ const extractLearnerScopedRequest = (payload: unknown, learnerIds: Set<string>):
   const fromList = getMostRecentRequest(scopedItems);
   if (fromList) return fromList;
 
+  if (requestItems.length) {
+    // Some learner endpoints return items without matching learner ids after re-login.
+    return getMostRecentRequest(requestItems);
+  }
+
   // Some learner-scoped endpoints may return one item without student id.
   if (learnerIds.size && requestItems.length === 1) {
     return requestItems[0];

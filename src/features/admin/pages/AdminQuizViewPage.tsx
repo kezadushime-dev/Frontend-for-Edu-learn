@@ -1,11 +1,11 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { PrimaryNav, TopBar } from '../../../core/layout/LayoutPieces';
 import { Sidebar } from '../../../core/layout/Sidebars';
 import { api } from '../../../shared/utils/api';
 
 const formatDate = (value?: string) => {
-  if (!value) return 'â€”';
+  if (!value) return '—';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleString();
@@ -56,7 +56,7 @@ export default function AdminQuizView() {
           { label: 'Users', to: '/admin-users' },
           { label: 'Lessons', to: '/admin-lessons' },
           { label: 'Quizzes', to: '/admin-quizzes', className: 'text-primary font-semibold' },
-          { label: 'Reports', to: '/admin/report-requests' }
+          { label: 'Certificates', to: '/admin/report-requests' }
         ]}
       />
 
@@ -68,7 +68,7 @@ export default function AdminQuizView() {
             { label: 'Manage Users', to: '/admin-users' },
             { label: 'Manage Lessons', to: '/admin-lessons' },
             { label: 'Manage Quizzes', active: true },
-            { label: 'Report Requests', to: '/admin/report-requests' },
+            { label: 'Certificate Requests', to: '/admin/report-requests' },
           ]}
         />
 
@@ -96,15 +96,15 @@ export default function AdminQuizView() {
                 <div className="grid md:grid-cols-2 gap-4 text-sm">
                   <div>
                     <p className="text-gray-500">Title</p>
-                    <p className="font-semibold">{quiz.title || 'â€”'}</p>
+                    <p className="font-semibold">{quiz.title || '—'}</p>
                   </div>
                   <div>
                     <p className="text-gray-500">Lesson</p>
-                    <p className="font-semibold">{quiz.lesson?.title || quiz.lesson || 'â€”'}</p>
+                    <p className="font-semibold">{quiz.lesson?.title || quiz.lesson || '—'}</p>
                   </div>
                   <div>
                     <p className="text-gray-500">Passing Score</p>
-                    <p className="font-semibold">{quiz.passingScore ?? 'â€”'}%</p>
+                    <p className="font-semibold">{quiz.passingScore ?? '—'}%</p>
                   </div>
                   <div>
                     <p className="text-gray-500">Status</p>
@@ -116,7 +116,7 @@ export default function AdminQuizView() {
                   </div>
                   <div>
                     <p className="text-gray-500">Created By</p>
-                    <p className="font-semibold">{quiz.createdBy?.name || quiz.createdBy?.email || quiz.createdBy || 'â€”'}</p>
+                    <p className="font-semibold">{quiz.createdBy?.name || quiz.createdBy?.email || quiz.createdBy || '—'}</p>
                   </div>
                   <div>
                     <p className="text-gray-500">Created</p>
@@ -150,7 +150,7 @@ export default function AdminQuizView() {
                           )}
                         </ul>
                         <p className="text-xs text-gray-500 mt-2">
-                          Correct option index: {question.correctOptionIndex ?? 'â€”'} | Points: {question.points ?? 1}
+                          Correct option index: {question.correctOptionIndex ?? '—'} | Points: {question.points ?? 1}
                         </p>
                       </div>
                     ))}
