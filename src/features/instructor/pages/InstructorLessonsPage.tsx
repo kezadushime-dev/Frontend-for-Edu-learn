@@ -31,6 +31,7 @@ export default function InstructorLessons() {
 
   const fetchLessons = async () => {
     try {
+      setLoading(true);
       const res = await api.lessons.list();
       setLessons(res.data.lessons || []);
     } catch (err) {
@@ -133,7 +134,11 @@ export default function InstructorLessons() {
             </div>
           )}
 
-          {!loading && lessons.length > 0 ? (
+          {loading ? (
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <div className="py-12 text-center text-gray-500">Loading lessons...</div>
+            </div>
+          ) : lessons.length > 0 ? (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {lessons.map((lesson) => (
                 <LessonCard
@@ -150,11 +155,11 @@ export default function InstructorLessons() {
                 />
               ))}
             </div>
-          ) : !loading ? (
+          ) : (
             <div className="bg-white rounded-xl shadow-lg p-6">
               <div className="py-12 text-center text-gray-500">No lessons found</div>
             </div>
-          ) : null}
+          )}
         </div>
       </section>
     </div>

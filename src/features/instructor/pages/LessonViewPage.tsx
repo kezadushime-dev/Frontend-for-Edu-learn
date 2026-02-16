@@ -24,7 +24,7 @@ export default function LessonView() {
     loadLesson();
   }, [id]);
 
-  if (loading) return null;
+  if (loading) return <div className="p-6 text-sm text-gray-600">Loading lesson...</div>;
   if (error) return <div>{error}</div>;
   if (!lesson) return <div>Lesson not found.</div>;
 

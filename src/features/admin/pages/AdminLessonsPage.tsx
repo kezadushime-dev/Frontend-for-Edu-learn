@@ -22,6 +22,7 @@ export default function AdminLessonsPage() {
   const navigate = useNavigate();
   const toast = useToast();
   const [lessons, setLessons] = useState<LessonRow[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState('');
 
@@ -30,6 +31,7 @@ export default function AdminLessonsPage() {
 
     const load = async () => {
       try {
+        setLoading(true);
         const res = await api.lessons.list();
         if (!mounted) return;
         setLessons((res.data.lessons || []) as LessonRow[]);
@@ -38,6 +40,8 @@ export default function AdminLessonsPage() {
         const message = err instanceof Error ? err.message : 'Failed to load lessons.';
         setError(message);
         toast.error(message);
+      } finally {
+        if (mounted) setLoading(false);
       }
     };
 
@@ -104,7 +108,11 @@ export default function AdminLessonsPage() {
 
           {error ? <p className="text-red-600 text-sm mb-4">{error}</p> : null}
 
-          {lessons.length > 0 ? (
+          {loading ? (
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <p className="text-gray-600 text-sm">Loading lessons...</p>
+            </div>
+          ) : lessons.length > 0 ? (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {lessons.map((lesson) => {
                 const id = String(lesson._id || lesson.id || '');

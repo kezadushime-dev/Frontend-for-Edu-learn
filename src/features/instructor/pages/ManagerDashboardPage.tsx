@@ -217,6 +217,7 @@ export default function ManagerDashboardPage() {
               </div>
 
               {error ? <p className="mt-4 text-sm text-rose-600">{error}</p> : null}
+              {loading ? <p className="mt-4 text-sm text-slate-500">Loading manager insights...</p> : null}
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -256,7 +257,9 @@ export default function ManagerDashboardPage() {
                   <h3 className="font-bold text-slate-800">Courses</h3>
                   <span className="text-xs font-semibold text-slate-500">{lessons.length}</span>
                 </div>
-                {lessons.length > 0 ? (
+                {loading ? (
+                  <div className="py-6 text-center text-slate-500">Loading lessons...</div>
+                ) : lessons.length > 0 ? (
                   <div className="grid gap-4 sm:grid-cols-2">
                     {lessons.slice(0, 4).map((lesson) => (
                       <LessonCard
@@ -280,7 +283,9 @@ export default function ManagerDashboardPage() {
                   <h3 className="font-bold text-slate-800">Assessments</h3>
                   <span className="text-xs font-semibold text-slate-500">{quizzes.length}</span>
                 </div>
-                {quizzes.length > 0 ? (
+                {loading ? (
+                  <div className="py-6 text-center text-slate-500">Loading quizzes...</div>
+                ) : quizzes.length > 0 ? (
                   <div className="grid gap-4 sm:grid-cols-2">
                     {quizzes.slice(0, 4).map((quiz) => (
                       <QuizCard

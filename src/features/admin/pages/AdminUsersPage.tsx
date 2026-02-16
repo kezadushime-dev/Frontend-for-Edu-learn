@@ -7,10 +7,32 @@ import { useToast } from '../../../shared/hooks/useToast';
 
 const roleOptions = ['learner', 'instructor', 'admin'];
 
+const resolveUserPhoto = (user: any) => {
+  const candidates = [
+    user?.profilePhoto,
+    user?.profileImage,
+    user?.avatar,
+    user?.image,
+    user?.photo,
+    user?.picture,
+    user?.profile?.photo,
+    user?.profile?.avatar,
+    user?.profile?.image
+  ];
+  const found = candidates.find((value) => typeof value === 'string' && value.trim().length > 0);
+  return found ? String(found).trim() : '';
+};
+
+const userInitial = (user: any) => {
+  const source = String(user?.name || user?.email || 'U').trim();
+  return source ? source[0].toUpperCase() : 'U';
+};
+
 export default function AdminUsers() {
   const toast = useToast();
   const [users, setUsers] = useState<any[]>([]);
   const [error, setError] = useState<string>('');
+  const [listLoading, setListLoading] = useState(true);
   const [saving, setSaving] = useState<string>('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
@@ -25,12 +47,15 @@ export default function AdminUsers() {
     let mounted = true;
     const load = async () => {
       try {
+        setListLoading(true);
         const res = await api.admin.users();
         if (!mounted) return;
         setUsers(res.data.users || []);
       } catch (err: any) {
         if (!mounted) return;
         setError(err?.message || 'Failed to load users.');
+      } finally {
+        if (mounted) setListLoading(false);
       }
     };
     load();
@@ -111,7 +136,9 @@ export default function AdminUsers() {
   const rows = users.map((user) => ({
     ...user,
     _id: user._id || user.id,
-    isActive: user.isActive ?? true
+    isActive: user.isActive ?? true,
+    profilePhoto: resolveUserPhoto(user),
+    profileInitial: userInitial(user)
   }));
 
   return (
@@ -155,41 +182,62 @@ export default function AdminUsers() {
           {error ? <p className="text-red-600 text-sm mb-4">{error}</p> : null}
 
           <div className="bg-white rounded-xl shadow-lg p-6">
-            <AdminTable
-              columns={[
-                { key: 'name', label: 'Name' },
-                { key: 'email', label: 'Email' },
-                { key: 'role', label: 'Role' },
-                { key: 'isActive', label: 'Active' }
-              ]}
-              rows={rows}
-              renderActions={(row) => {
-                const id = String(row._id || row.id || '');
-                return (
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => handleViewUser(row)}
-                      className="text-primary font-semibold text-sm hover:underline"
-                    >
-                      View
-                    </button>
-                    <button
-                      onClick={() => handleEditUser(row)}
-                      className="text-primary font-semibold text-sm hover:underline"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      className="text-red-600 font-semibold text-sm"
-                      onClick={() => deleteUser(id)}
-                      disabled={saving === id}
-                    >
-                      {saving === id ? 'Working...' : 'Delete'}
-                    </button>
-                  </div>
-                );
-              }}
-            />
+            {listLoading ? (
+              <p className="text-gray-600 text-sm">Loading users...</p>
+            ) : (
+              <AdminTable
+                columns={[
+                  { key: 'profilePhoto', label: 'Photo' },
+                  { key: 'name', label: 'Name' },
+                  { key: 'email', label: 'Email' },
+                  { key: 'role', label: 'Role' },
+                  { key: 'isActive', label: 'Active' }
+                ]}
+                rows={rows}
+                renderCell={(row, columnKey) => {
+                  if (columnKey !== 'profilePhoto') return undefined;
+                  const photo = String(row.profilePhoto || '');
+                  const initial = String(row.profileInitial || 'U');
+                  return photo ? (
+                    <img
+                      src={photo}
+                      alt="User profile"
+                      className="w-10 h-10 rounded-full object-cover border border-gray-200"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-blue-100 border border-blue-200 text-primary font-bold text-sm flex items-center justify-center">
+                      {initial}
+                    </div>
+                  );
+                }}
+                renderActions={(row) => {
+                  const id = String(row._id || row.id || '');
+                  return (
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => handleViewUser(row)}
+                        className="text-primary font-semibold text-sm hover:underline"
+                      >
+                        View
+                      </button>
+                      <button
+                        onClick={() => handleEditUser(row)}
+                        className="text-primary font-semibold text-sm hover:underline"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="text-red-600 font-semibold text-sm"
+                        onClick={() => deleteUser(id)}
+                        disabled={saving === id}
+                      >
+                        {saving === id ? 'Working...' : 'Delete'}
+                      </button>
+                    </div>
+                  );
+                }}
+              />
+            )}
           </div>
         </div>
       </section>

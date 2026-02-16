@@ -173,7 +173,7 @@ export default function QuizEdit() {
     }
   };
 
-  if (loading) return null;
+  if (loading) return <div className="p-6 text-sm text-gray-600">Loading quiz...</div>;
 
   return (
     <div className="bg-[#f5f8ff] text-slate-800">

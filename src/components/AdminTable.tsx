@@ -10,25 +10,25 @@ type AdminTableProps = {
   columns: Column[];
   rows: Record<string, unknown>[];
   renderActions?: (row: Record<string, unknown>) => ReactNode;
+  renderCell?: (row: Record<string, unknown>, columnKey: string) => ReactNode | undefined;
   hideActions?: boolean;
   maxRows?: number;
 };
 
-export function AdminTable({ columns, rows, renderActions, hideActions, maxRows = 5 }: AdminTableProps) {
+export function AdminTable({ columns, rows, renderActions, renderCell, hideActions, maxRows = 5 }: AdminTableProps) {
   const [showAll, setShowAll] = useState(false);
   const displayRows = showAll ? rows : rows.slice(0, maxRows);
   const hasMore = rows.length > maxRows;
 
   const truncateText = (text: string, maxLength: number = 50) => {
     if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength) + '...';
+    return `${text.substring(0, maxLength)}...`;
   };
 
   const formatCellValue = (value: unknown, key: string) => {
-    const text = Array.isArray(value) ? value.join(', ') : value ?? '—';
+    const text = Array.isArray(value) ? value.join(', ') : value ?? '-';
     const strValue = String(text);
 
-    // Status badge styling
     if (key === 'status') {
       if (strValue.includes('Active')) {
         return (
@@ -36,7 +36,8 @@ export function AdminTable({ columns, rows, renderActions, hideActions, maxRows 
             {strValue}
           </span>
         );
-      } else if (strValue.includes('Inactive')) {
+      }
+      if (strValue.includes('Inactive')) {
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-800">
             {strValue}
@@ -75,10 +76,11 @@ export function AdminTable({ columns, rows, renderActions, hideActions, maxRows 
                   {columns.map((col) => {
                     const value = row[col.key as keyof typeof row];
                     const displayValue = formatCellValue(value, col.key);
-                    const fullText = Array.isArray(value) ? value.join(', ') : String(value ?? '—');
+                    const customCell = renderCell?.(row, col.key);
+                    const fullText = Array.isArray(value) ? value.join(', ') : String(value ?? '-');
                     return (
                       <td key={`${rowIndex}-${col.key}`} className="px-6 py-4 text-gray-700 whitespace-nowrap" title={fullText}>
-                        {displayValue}
+                        {customCell !== undefined ? customCell : displayValue}
                       </td>
                     );
                   })}

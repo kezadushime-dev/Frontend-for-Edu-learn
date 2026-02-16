@@ -126,12 +126,14 @@ export default function AdminReportRequestsPage() {
           {error ? <p className="text-sm text-red-600 mb-4">{error}</p> : null}
           {lastSynced ? <p className="text-xs text-gray-500 mb-4">Last synced at {lastSynced}</p> : null}
 
-          <ReportRequestTable
-            rows={rows}
-            actionLoadingId={actionId}
-            onApprove={(requestId) => applyDecision(requestId, 'APPROVED')}
-            onReject={(requestId) => applyDecision(requestId, 'REJECTED')}
-          />
+          {!loading ? (
+            <ReportRequestTable
+              rows={rows}
+              actionLoadingId={actionId}
+              onApprove={(requestId) => applyDecision(requestId, 'APPROVED')}
+              onReject={(requestId) => applyDecision(requestId, 'REJECTED')}
+            />
+          ) : null}
         </div>
       </section>
     </div>

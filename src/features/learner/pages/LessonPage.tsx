@@ -12,6 +12,7 @@ const storageKey = 'edulearn_lessons_v2';
 export default function Lesson() {
   const { id } = useParams<{ id?: string }>();
   const [lessons, setLessons] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [selectedLessonId, setSelectedLessonId] = useState<string>('');
   const [progress, setProgress] = useState<LessonProgress>(() => readJson(storageKey, {}));
@@ -25,6 +26,7 @@ export default function Lesson() {
     let mounted = true;
     const load = async () => {
       try {
+        setLoading(true);
         const res = await api.lessons.list();
         if (!mounted) return;
         const items = res.data.lessons || [];
@@ -37,6 +39,8 @@ export default function Lesson() {
       } catch (err: any) {
         if (!mounted) return;
         setError(err?.message || 'Failed to load lessons.');
+      } finally {
+        if (mounted) setLoading(false);
       }
     };
     load();
@@ -162,7 +166,9 @@ export default function Lesson() {
               </div>
 
               <div className="bg-white rounded-xl shadow-lg p-8">
-                {lesson ? (
+                {loading ? (
+                  <p className="text-gray-600">Loading lessons...</p>
+                ) : lesson ? (
                   <>
                     <div className="flex items-center justify-between mb-4">
                       <span className="text-xs font-bold uppercase tracking-widest text-primary bg-blue-50 px-3 py-1 rounded-full">
