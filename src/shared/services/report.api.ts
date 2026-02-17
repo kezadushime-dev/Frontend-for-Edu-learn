@@ -213,9 +213,9 @@ const parseFileName = (contentDisposition: string | null): string | null => {
 export const reportService = {
   requestDownload: async (input: RequestDownloadInput = {}): Promise<ReportRequest> => {
     const response = await tryFallback<unknown>([
+      () => request('/reports/request-download', { method: 'PATCH', json: input }),
       () => request('/reports', { method: 'PATCH', json: input }),
-      () => request('/reports/', { method: 'PATCH', json: input }),
-      () => request('/reports/request-download', { method: 'PATCH', json: input })
+      () => request('/reports/', { method: 'PATCH', json: input })
     ]);
     return normalizeReportRequest(extractSingleRequest(response) || pickRequestLikeObject(response));
   },
@@ -328,19 +328,14 @@ export const reportService = {
     const headers = new Headers();
     if (token) headers.set('Authorization', `Bearer ${token}`);
 
-    const query = new URLSearchParams();
-    if (params.requestId) query.set('requestId', params.requestId);
-    if (params.courseId) query.set('courseId', params.courseId);
-    if (params.quizId) query.set('quizId', params.quizId);
-
-    const queryString = query.toString() ? `?${query.toString()}` : '';
-    const withSlashQueryString = queryString ? `/?${query.toString()}` : '/';
     const candidates = [
-      `${baseUrl}/reports/download${queryString}`,
+      `${baseUrl}/reports/download`,
+      `${baseUrl}/reports/download/`,
+      `${baseUrl}/reports/download${params.requestId ? `?requestId=${encodeURIComponent(params.requestId)}` : ''}`,
+      `${baseUrl}/reports/download${params.courseId ? `?courseId=${encodeURIComponent(params.courseId)}` : ''}`,
+      `${baseUrl}/reports/download${params.quizId ? `?quizId=${encodeURIComponent(params.quizId)}` : ''}`,
       `${baseUrl}/reports/`,
-      `${baseUrl}/reports`,
-      `${baseUrl}/reports${queryString}`,
-      `${baseUrl}/reports${withSlashQueryString}`
+      `${baseUrl}/reports`
     ];
 
     let lastError: unknown = null;

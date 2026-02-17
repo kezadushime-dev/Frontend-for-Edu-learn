@@ -73,8 +73,15 @@ export default function Lesson() {
     setProgress((prev) => ({ ...prev, [lesson._id]: true }));
   };
 
-  const completedCount = Object.keys(progress).filter((key) => progress[key]).length;
-  const percent = lessons.length ? Math.round((completedCount / lessons.length) * 100) : 0;
+  /** * LOGIC UPDATE: Ensure progress doesn't exceed 100%
+   * We only count IDs that actually exist in the current lessons array.
+   */
+  const percent = useMemo(() => {
+    if (!lessons.length) return 0;
+    const validCompletedCount = lessons.filter(l => progress[l._id]).length;
+    const rawPercent = Math.round((validCompletedCount / lessons.length) * 100);
+    return Math.min(rawPercent, 100);
+  }, [lessons, progress]);
 
   return (
     <div className="bg-[#f5f8ff] text-slate-800">
@@ -102,8 +109,6 @@ export default function Lesson() {
           />
 
           <div className="animate-fadeInUp">
-           
-            
             <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-8">
               <div>
                 <p className="text-primary uppercase font-semibold tracking-wider">Lessons</p>
@@ -146,7 +151,7 @@ export default function Lesson() {
 
             <div className="grid lg:grid-cols-[300px_1fr] gap-6">
               <div className="bg-white rounded-xl shadow-lg p-6">
-                <h3 className="font-bold mb-4">Lessons</h3>
+                <h3 className="font-bold mb-4">Lessons List</h3>
                 <div className="grid gap-3 text-sm">
                   {filteredLessons.map((item) => (
                     <button
@@ -207,7 +212,7 @@ export default function Lesson() {
               <div className="bg-white rounded-xl shadow-lg p-6">
                 <h3 className="font-bold mb-4">Course Progress</h3>
                 <div className="w-full bg-gray-100 rounded-full h-2 mb-3">
-                  <div className="bg-primary h-2 rounded-full" style={{ width: `${percent}%` }}></div>
+                  <div className="bg-primary h-2 rounded-full transition-all duration-500" style={{ width: `${percent}%` }}></div>
                 </div>
                 <p className="text-sm text-gray-600">{percent}% complete</p>
                 <div className="mt-4 text-xs text-gray-500">Complete lessons to unlock quizzes.</div>
@@ -242,5 +247,3 @@ export default function Lesson() {
     </div>
   );
 }
-
-
