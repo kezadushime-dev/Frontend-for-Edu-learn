@@ -16,7 +16,7 @@ npm run build
 npm run test:reports
 ```
 
-## Report Card Permission Workflow
+## Report Card Permission Workflowq
 
 ### Learner Flow
 - Route: `/learner/report-card` (also `/report-card`)
