@@ -9,7 +9,7 @@ npm install
 npm run dev
 ```
 
-Optional checks:
+Optional checks;
 
 ```bash
 npm run build
